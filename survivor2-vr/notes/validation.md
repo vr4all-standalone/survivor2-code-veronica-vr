@@ -96,3 +96,17 @@ uses [1,1,41hex,0]. Stage zero alone cannot distinguish these from briefing [1,0
 The predicate now includes the measured mode1/submode1/stage0 case, with briefing and
 unknown stage/submode rejection tests. All57 native checks pass. The short xr-phase-green
 route fires twice without a false inactive transition; the correction was independently reviewed.
+
+## Preview 2 native weapon update (2026-10-25)
+
+The user reports successful headset gameplay on preview 1, followed by a request for native weapon models and a report that original character arms reappear while firing the Ingram. This is user-reported testing; it does not close the physical checklist for preview 2.
+
+Owned-source research identified four arcade loadout rows containing eight distinct native weapon IDs: BR-93R (4), Python (6), Gold Luger (7), Ingram (8), SPAS-12 (11), AK47S (12), M79 (14) and LN-02 (18). Other inherited source assets are not advertised as additional arcade inventory.
+
+The direct builder traverses complete native weapon object subtrees and omits only their hand-root mesh. All eight private owned-source builds match independently measured source strip/triangle counts, decoded texture CRCs and complete emitted geometry/material/texture data. Synthetic malformed-source and cache integrity/topology tests run under optimized fast-math. No proprietary fixtures or derived weapon files are tracked or packaged.
+
+The Ingram regression was reproduced with the native state [mode1, submode1, motiona9, stage2]. That state previously toggled gameplay inactive, exposed the native visuals and neutralized held input. Exact motion-aware acceptance keeps it active while preserving unknown-state/briefing exclusions. The initial phase/state suite passes81checks, input23 and app6. The shared settings suite passes132checks. A focused review found no phase/state defect.
+
+Preparation/selection tests cover all-eight completeness, actual presentation signals before work, skip/failure session latches, native/custom selection boundaries and actual atomic replacement behavior. Inherited model builder checks pass16/16. Focused decoder and preparation/render integration reviews found no actionable defects. Release packaging regressions were updated to Android versionCode2 and the preview2 portable README:42/42pass.
+
+Further aiming and runtime integration evidence for this update is recorded below after completion. Raw ROM sections, RAM/VRAM, models, screenshots and instrumented research binaries remain private under ignored research directories.

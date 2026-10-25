@@ -12,7 +12,7 @@ fun gitVersionName(): String {
 }
 
 // hotd2-vr: Survivor 2 - Code: Veronica VR's own version. The vr build's versionName is "<hubVersion>-g<commit>"
-// (set in androidComponents below); the standalone release starts at versionCode 1.
+// (set in androidComponents below); each standalone update increments versionCode.
 val hubVersion = "1.0.0"
 
 fun gitShortHash(): String {
@@ -240,7 +240,7 @@ androidComponents {
         variant.applicationId.set("com.vrlightgunhub.survivor2")
         variant.outputs.forEach {
             it.versionName.set("$hubVersion-g${gitShortHash()}")
-            it.versionCode.set(1)
+            it.versionCode.set(2)
         }
         val licence = tasks.register<LicenceText>("${variant.name}LicenceText") {
             gpl3.set(file("../../../core/deps/picotcp/LICENSE.GPLv3"))

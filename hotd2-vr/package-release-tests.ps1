@@ -79,14 +79,14 @@ try {
         '  E: application', '    E: activity', '      A: android:name(0x01010003)="com.flycast.emulator.Survivor2StartActivity"',
         '      E: intent-filter', '        E: category', '          A: android:name(0x01010003)="android.intent.category.LAUNCHER"')
     Check 'manifest launcher parser uses activity owner' (@(Get-LauncherOwners $tree) -join ',' -eq 'com.flycast.emulator.Survivor2StartActivity')
-    $badging = @("package: name='com.vrlightgunhub.survivor2' versionCode='1' versionName='1.0.0-gabc123'", "application-label:'Survivor 2 - Code: Veronica VR'")
+    $badging = @("package: name='com.vrlightgunhub.survivor2' versionCode='2' versionName='1.0.0-gabc123'", "application-label:'Survivor 2 - Code: Veronica VR'")
     $hasIdentityCheck = [bool](Get-Command Find-AppIdentityFault -ErrorAction SilentlyContinue)
     Check 'APK metadata validator is independently testable' $hasIdentityCheck
     if ($hasIdentityCheck) {
         Check 'valid Survivor APK metadata accepted' (@(Find-AppIdentityFault $badging $tree 'abc123' $false).Count -eq 0)
         foreach ($case in @(
             @('package', 'com.vrlightgunhub.survivor2', 'com.vrlightgunhub.confmiss'),
-            @('version code', "versionCode='1'", "versionCode='9'"),
+            @('version code', "versionCode='2'", "versionCode='9'"),
             @('base version', '1.0.0-gabc123', '1.2.0-gabc123'),
             @('commit version', '1.0.0-gabc123', '1.0.0-gdef456'),
             @('label', 'Survivor 2 - Code: Veronica VR', 'Confidential Mission VR'))) {
@@ -140,7 +140,7 @@ try {
         $productionFaults = @(Find-PcArchiveFault $archive $files)
         if ($productionFaults.Count) { $productionFaults | ForEach-Object { Write-Host "Template fault: $_" } }
         Check 'production README config and launcher satisfy portable checks' ($productionFaults.Count -eq 0)
-        Check 'packaged README explicitly marks unreleased development build' ($generatedReadme.Contains('development build - UNRELEASED'))
+        Check 'packaged README names the experimental weapon preview' ($generatedReadme.Contains('experimental preview 2'))
         $entries['README.txt'] = $readme.Replace('Survivor 2 - Code: Veronica VR','Confidential Mission VR')
         $archive = Archive 'portable-wrong-readme.zip' $entries
         Check 'stale CM README rejected' (@(Find-PcArchiveFault $archive $files).Count -gt 0)

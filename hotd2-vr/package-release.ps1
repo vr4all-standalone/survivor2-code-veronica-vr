@@ -223,7 +223,7 @@ function Find-AppIdentityFault([string[]]$badgingLines, [string[]]$manifestTree,
     $badging = $badgingLines | Where-Object { $_ -match '^package:' } | Select-Object -First 1
     $wantVersion = [regex]::Escape("$appVersion-g") + $(if ($testBuild) { '[0-9a-f]+' } else { [regex]::Escape($shortHash) })
     if ($badging -notmatch "^package: name='$([regex]::Escape($appId))'") { "the package is not $appId" }
-    if ($badging -notmatch "versionCode='1'") { 'the versionCode is not 1' }
+    if ($badging -notmatch "versionCode='2'") { 'the versionCode is not 2' }
     if ($badging -notmatch "versionName='$wantVersion'") {
         "the versionName is not $appVersion-g$(if ($testBuild) { '<commit>' } else { $shortHash })"
     }
@@ -422,7 +422,7 @@ rend.NativeDepthInterpolation = yes
 vr.Xr = yes
 '@
 $readme = @'
-Survivor 2 - Code: Veronica VR, PC development build - UNRELEASED
+Survivor 2 - Code: Veronica VR, PC experimental preview 2
 Resident Evil Survivor 2 - Code: Veronica (NAOMI World BHF2 Ver. E)
 
 Free roaming with tracked aiming and stereoscopic head tracking. One player per app
@@ -450,8 +450,11 @@ The common 13-row menu contains Resume, Recenter, Gun, Gun angle, Reload, Two pl
 Laser, Haptics, World size, Panel distance, Wider view, How to play, Quit.
 Reload displays Native automatic; Two players displays Single player; Wider view is
 Unavailable. These three entries cannot be changed. Haptics offers Off/Light/Medium/Strong.
-Gun choices include the arcade gun, Zapper and compatible custom GLBs. No native game
-weapon model is extracted or included. Accepted native rounds drive shot feedback.
+Gun -> In-game weapons follows native swaps: BR-93R, Python, Gold Luger, Ingram,
+SPAS-12, AK47S, M79 and LN-02. First launch prepares complete weapon models from your
+cartridge; B/Y skips preparation for that session. Explicit custom GLBs override the
+automatic model. Arcade and Zapper remain available. No extracted game models are
+included in this download. Accepted native rounds drive shot feedback.
 Native auto-aim camera tilt is replaced by a level body view in active VR play; the
 local avatar visual is hidden, while other actors and native gameplay remain active.
 Turning your head beyond the game's rendered field of view reveals undrawn space.
