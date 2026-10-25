@@ -125,3 +125,17 @@ Fresh-cache simulator run `weapons-runtime-prepare` prepared all eight complete 
 `weapons-runtime-custom` retained the Zapper override while native ID8 was equipped. `weapons-runtime-repair` rejected a deliberately corrupt Ingram cache and rebuilt only that entry. `weapons-runtime-skip` skipped preparation, kept fallback through focus loss/return and did not retry during that session. Caches and licensed research model files remain in ignored private app data.
 
 For an external inventory cross-check, see the [arcade-version play guide](https://gamefaqs.gamespot.com/ps2/540785-resident-evil-survivor-2-code-veronica/faqs/13888) and [Namco operator manual](https://arcarc.xmission.com/PDF_Arcade_Manuals_and_Schematics/Gun%20Survivor%202.pdf). The implementation inventory and source fingerprints come from the owned World cartridge.
+
+
+### Published preview 2 artifacts
+
+Final clean source: `fbeaacfea7374e1269e123c56ec202ba44294159`, tagged `v1.0.0-preview.2`. Windows RelWithDebInfo and Quest arm64 release builds passed. The APK reports package `com.vrlightgunhub.survivor2`, versionCode2, versionName `1.0.0-gfbeaacfea` and sole launcher `Survivor2StartActivity`. Its public signing certificate matches preview1 (`a293e4f11a4c139a9b5dc5d6d84081c887f8a98d5fc62951e517551775479e61`).
+
+Strict packaging verified both binaries name the source commit, matched all nine bundled model/credit files, checked licenses and portable launch defaults, and rejected game-data/private-signing paths. No extracted weapon caches are in either archive. GitHub asset digests and anonymous downloaded bytes matched local SHA-256 values:
+
+```text
+44650175736a69fe6c40d918f0105066196b55661cc00cd855c349ddd3d74f00  survivor2-code-veronica-vr-quest.apk
+b0ef6d319aab21d930d03978898448251cd940757f10a831060ad44f449e34a7  survivor2-code-veronica-vr-pcvr.zip
+```
+
+The [public Preview2 release](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.0-preview.2) and corresponding source tag were verified. VR4ALL's existing Survivor card selected the live Preview2 Quest APK, including its exact digest and size. The local catalog suite passed4/4. Physical headset testing of this update remains open; no headset installation was performed in this session.
