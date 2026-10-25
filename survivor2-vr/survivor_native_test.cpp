@@ -25,7 +25,7 @@ int main(){
  corrupt[0]=1;corrupt[3]=1; check(!cameraRay(corrupt,{0,0,0},{0,0,-1},200,r),"reject perspective matrix");
  std::unordered_map<unsigned,unsigned short> code;for(const auto& g:NativeGuards)code[g.offset]=g.word;
  check(nativeSignature([&](unsigned a){return code[a];}),"known World signature");
- code[RayEntry]=TrapOpcode;code[AmmoEntry]=TrapOpcode;
+ code[RayEntry]=TrapOpcode;code[AmmoEntry]=TrapOpcode;code[ProjectileDone]=TrapOpcode;
  check(nativeSignature([&](unsigned a){return code[a];}),"own patched entries accepted");
  code[0x111f66]^=1;check(!nativeSignature([&](unsigned a){return code[a];}),"unknown revision rejected");
  ControlGate gate;ControlSample c;c.focused=c.aimTracked=c.motionTracked=true;
@@ -109,5 +109,35 @@ int main(){
  }
  check(unknownWeaponFallback,"unknown and absent equipped IDs use fallback");
  check(nativeWeaponId(0x10004)==0&&nativeWeaponId(0xffffffff)==0,"corrupt full-width equipped IDs cannot alias known weapons");
+ check(projectileEntity(0,0x8c31246c,0x8c195324,0)&&projectileEntity(511,0x8c3adf8c,0x8c195324,0),"valid allocated projectile pool endpoints accepted");
+ check(!projectileEntity(0xffffffff,0x8c31246c,0x8c195324,0)&&!projectileEntity(512,0x8c3ae46c,0x8c195324,0),"failed and exhausted allocations cannot be rewritten");
+ check(!projectileEntity(1,0x8c31246c,0x8c195324,0),"allocation index must match exact entity address");
+ check(!projectileEntity(0,0x8c31246c,0x8c3d62d8,0)&&!projectileEntity(0,0x8c31246c,0x8c195324,0x8c3d62d8),"foreign caller context and attached entity owner rejected");
+ uint16_t shotPitch=0,shotYaw=0;
+ check(directionAngles({1,0,0},shotPitch,shotYaw)&&shotPitch==0&&shotYaw==49152,"projectile visual angles face tracked right");
+ check(directionAngles({0,1,-1},shotPitch,shotYaw)&&shotPitch==8192&&shotYaw==0,"projectile visual pitch faces tracked elevation");
+ check(!directionAngles({0,0,0},shotPitch,shotYaw)&&!directionAngles({NAN,0,0},shotPitch,shotYaw),"invalid projectile orientation rejected");
+ // A tracked shot must retain native speed, fan offsets and range, not collapse to one direction.
+ Vec v;
+ check(rotateNativeVector({2,3,-4},0,0,0,{0,0,-1},v)&&std::abs(v.x-2)<.001f&&std::abs(v.y-3)<.001f&&std::abs(v.z+4)<.001f,"neutral tracked frame preserves native vector");
+ check(rotateNativeVector({2,3,-4},0,0,0,{1,0,0},v)&&std::abs(v.x-4)<.001f&&std::abs(v.y-3)<.001f&&std::abs(v.z-2)<.001f,"tracked right turn preserves lateral and vertical fan");
+ check(rotateNativeVector({-4,3,-2},0,16384,0,{0,0,-1},v)&&std::abs(v.x-2)<.001f&&std::abs(v.y-3)<.001f&&std::abs(v.z+4)<.001f,"native yaw is removed before tracked aim");
+ check(rotateNativeVector({2,4,3},16384,0,0,{0,0,-1},v)&&std::abs(v.x-2)<.001f&&std::abs(v.y-3)<.001f&&std::abs(v.z+4)<.001f,"native pitch is removed before tracked aim");
+ check(rotateNativeVector({-3,2,-4},0,0,16384,{0,0,-1},v)&&std::abs(v.x-2)<.001f&&std::abs(v.y-3)<.001f&&std::abs(v.z+4)<.001f,"native roll is removed before tracked aim");
+ Vec fanA,fanB;
+ check(rotateNativeVector({-.4f,.3f,-2},0,0,0,{1,2,3},fanA)&&rotateNativeVector({.4f,.3f,-2},0,0,0,{1,2,3},fanB),"both native fan projectiles retarget");
+ auto dot=[](Vec a,Vec b){return a.x*b.x+a.y*b.y+a.z*b.z;};
+ check(std::abs(dot(fanA,fanA)-4.25f)<.001f&&std::abs(dot(fanB,fanB)-4.25f)<.001f&&std::abs(dot(fanA,fanB)-3.93f)<.001f,"rotation retains each speed and pairwise fan angle");
+ check(rotateNativeVector({0,0,-2},0,0,0,{0,1,0},v)&&std::abs(v.y-2)<.001f,"vertical tracked aim is valid");
+ check(!rotateNativeVector({0,0,0},0,0,0,{0,0,-1},v)&&!rotateNativeVector({0,0,-2},0,0,0,{0,0,0},v),"zero native and tracked vectors rejected");
+ check(!rotateNativeVector({NAN,0,1},0,0,0,{0,0,-1},v)&&!rotateNativeVector({0,0,-2},0,0,0,{INFINITY,0,0},v),"nonfinite vectors rejected");
+ check(aimAllowed(true,true,0x8c3d5ce0,true,0)&&aimAllowed(true,true,0x8c3d5ce0,true,250),"fresh active P1 VR aim accepted");
+ check(!aimAllowed(true,false,0x8c3d5ce0,true,0)&&!aimAllowed(false,true,0x8c3d5ce0,true,0),"non-VR and inactive aim rejected");
+ check(!aimAllowed(true,true,0x8c3d62d8,true,0)&&!aimAllowed(true,true,0x8c2e286c,true,0),"P2 and NPC aim rejected");
+ check(!aimAllowed(true,true,0x8c3d5ce0,false,0)&&!aimAllowed(true,true,0x8c3d5ce0,true,-1)&&!aimAllowed(true,true,0x8c3d5ce0,true,251),"invalid future and stale tracking rejected");
+ for(uint32_t pr:{0x8c0398f0u,0x8c03992au,0x8c039966u,0x8c0399a6u,0x8c039b58u})check(projectileCall(14,pr,0x8c1bae04,0x04100001,0x82),"measured M79 fan spawn accepted");
+ check(projectileCall(18,0x8c039a7c,0x8c1bb084,0x04100001,0x40082),"measured LN02 spawn accepted");
+ check(!projectileCall(14,0x8c0488a0,0x8c1bae04,0x04100001,0x82)&&!projectileCall(18,0x8c0398f0,0x8c1bb084,0x04100001,0x40082),"muzzle flashes and mismatched launchers rejected");
+ check(!projectileCall(14,0x8c0398f0,0x8c1bae08,0x04100001,0x82)&&!projectileCall(14,0x8c0398f0,0x8c1bae04,1,0x82)&&!projectileCall(14,0x8c0398f0,0x8c1bae04,0x04100001,0x50003),"unknown descriptor flags and kind rejected");
  std::printf("%d/%d checks passed\n",checks-failures,checks);return failures?1:0;
 }
