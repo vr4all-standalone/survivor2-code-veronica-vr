@@ -6,6 +6,11 @@
 */
 #include "hands_rip.h"
 #include "hands_build.h"
+#include "survivor_prep.h"
+#include "survivor_model.h"
+#include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/naomi_roms.h"
+#include <cstring>
 #include "xr_host.h"
 #include "xr_sim.h"
 #include "rend/vr_reproject.h"
@@ -89,6 +94,8 @@ std::atomic<bool> newModel, skipRequested;
 std::atomic<float> progress;
 std::atomic<bool> staffRun;	// the run is for the hero's staff
 std::atomic<bool> cmRun;	// ...for Confidential Mission's guns
+std::atomic<bool> survivorRun { false }, survivorReady { false };
+SurvivorPreparation survivorPreparation;
 std::atomic<bool> lupinRun;	// ...for Lupin's neutral attract-sequence pistol
 // Confidential Mission's guns (Source::guns): made (or not wanted), and the pass a try at one
 // that isn't merged failed (gunMutex)
@@ -181,7 +188,7 @@ void stopPrep(const char *why, State next = Watching)
 	if (state != Preparing)
 		return;
 	state = next;
-	settings.input.fastForwardMode = fastForwardWas;
+	if (!survivorRun) settings.input.fastForwardMode = fastForwardWas;
 	lightgunSet(0, OffScreen, OffScreen, 0);
 	if (cmRun)
 	{
@@ -199,6 +206,8 @@ void stopPrep(const char *why, State next = Watching)
 void onStart()
 {
 	state = Off;
+	survivorRun = false;
+	survivorReady = false;
 	skipRequested = false;
 	progress = 0.f;
 	// a new game: whatever model the renderer has is another game's
@@ -208,6 +217,35 @@ void onStart()
 		return;
 	cmRun = source->kind == Source::CmGuns;
 	lupinRun = source->kind == Source::LupinGun;
+	survivorRun = source->kind == Source::SurvivorGuns;
+	if (survivorRun)
+	{
+		staffRun = false;
+		if (CurrentCartridge == nullptr || CurrentCartridge->game == nullptr
+				|| std::strcmp(CurrentCartridge->game->name, "gunsur2") != 0)
+		{
+			WARN_LOG(RENDERER, "VR hands: native weapons require the supported gunsur2 World cartridge");
+			return;
+		}
+		std::array<bool, 8> cached {};
+		for (size_t i = 0; i < cached.size(); ++i)
+		{
+			const auto& gun = survivorGuns()[i];
+			cached[i] = loadSurvivorGunCache(get_writable_data_path(gun.file), gun.id);
+		}
+		const bool allCached = std::all_of(cached.begin(), cached.end(), [](bool v) { return v; });
+		const bool allowed = allCached || ((xr::enabled() && !xr::sim::active()) || config::VrHandsPrep);
+		survivorPreparation.begin(allowed, cached, xr::enabled());
+		survivorReady = survivorPreparation.phase == SurvivorPreparation::Phase::Ready && allCached;
+		progress = survivorPreparation.progress();
+		if (survivorPreparation.preparing())
+		{
+			startedAt = gameSeconds();
+			state = Preparing;
+			NOTICE_LOG(RENDERER, "VR hands: preparing the eight in-game weapons from your cartridge");
+		}
+		return;
+	}
 	const bool watchOnly = haveModel();
 	if (watchOnly)
 	{
@@ -285,6 +323,50 @@ void onVBlank()
 {
 	if (state != Preparing)
 		return;
+	if (survivorRun)
+	{
+		const bool made = survivorPreparation.tick(skipRequested.load(),
+			[](size_t index, std::string& error) {
+				const auto& gun = survivorGuns()[index];
+				std::vector<uint8_t> bytes;
+				if (!buildSurvivorGun([](uint32_t offset, size_t size, uint8_t *dst) {
+					if (CurrentCartridge == nullptr || CurrentCartridge->game == nullptr
+							|| std::strcmp(CurrentCartridge->game->name, "gunsur2") != 0 || size > UINT32_MAX
+							|| offset > CurrentCartridge->getSize() || size > CurrentCartridge->getSize() - offset)
+						return false;
+					u32 count = (u32)size;
+					const void *src = CurrentCartridge->GetPtr(offset, count);
+					if (src == nullptr || count != size) return false;
+					std::memcpy(dst, src, size);
+					return true;
+				}, gun.id, bytes, error) || !validSurvivorGunCache(bytes, gun.id, error)) return false;
+				if (!saveModelCacheAtomic(bytes, get_writable_data_path(gun.file)))
+				{
+					error = std::string("can't write cache for ") + gun.name;
+					return false;
+				}
+				NOTICE_LOG(RENDERER, "VR hands: prepared %s (%zu bytes)", gun.name, bytes.size());
+				return true;
+			});
+		progress = survivorPreparation.progress();
+		if (made)
+		{
+			survivorReady = true;
+			newModel = true;
+			stopPrep("all eight native weapons ready", Off);
+		}
+		else if (!survivorPreparation.preparing())
+		{
+			if (survivorPreparation.phase == SurvivorPreparation::Phase::Skipped)
+				stopPrep("native weapons skipped for this session", Off);
+			else
+			{
+				WARN_LOG(RENDERER, "VR hands: native weapons unavailable: %s (Arcade gun this session)", survivorPreparation.error.c_str());
+				stopPrep("native weapons unavailable", Off);
+			}
+		}
+		return;
+	}
 	if (skipRequested)
 	{
 		// Confidential Mission (S23): skipped is skipped for the session, no gun made by watching
@@ -514,6 +596,8 @@ void onEvent(Event event, void *)
 		onVBlank();
 		break;
 	case Event::Terminate:
+		survivorPreparation.reset();
+		survivorReady = false;
 		stopPrep("stopped");
 		state = Off;
 		break;
@@ -813,7 +897,7 @@ std::string legacyModelPath()
 void observePass(const rend_context& ctx, const RenderPass& pass, const RenderPass& prev)
 {
 	const Source *source = gameModelSource();
-	if (state == Off || source == nullptr)
+	if (state == Off || source == nullptr || source->kind == Source::SurvivorGuns)
 		return;
 	if (source->gunModels())
 	{
@@ -919,8 +1003,14 @@ bool preparing() {
 	return state == Preparing;
 }
 
+bool survivorModelsReady() { return survivorReady.load(); }
+
 float prepProgress() {
 	return progress;
+}
+
+void prepPresented() {
+	if (state == Preparing && survivorRun) survivorPreparation.presented();
 }
 
 void skipPrep() {

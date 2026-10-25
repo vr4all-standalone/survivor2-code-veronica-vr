@@ -144,6 +144,8 @@ bool decodeTexture(const uint8_t *vram, size_t vramSize, const uint32_t *palette
 constexpr size_t MaxGunCacheBytes = 16 * 1024 * 1024;
 bool validateGunCache(const std::vector<uint8_t>& data, const GunTarget& target);
 bool loadGunCache(const std::string& path, const GunTarget& target);
+// Caller validates the format before using this generic same-directory atomic replacement.
+bool saveModelCacheAtomic(const std::vector<uint8_t>& data, const std::string& path);
 bool saveGunCache(const std::vector<uint8_t>& data, const std::string& path, const GunTarget& target);
 
 // Where the textures come from: tcw and the tsp's size bits.

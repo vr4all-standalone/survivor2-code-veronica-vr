@@ -6,6 +6,7 @@
 #include "vr_reproject.h"
 #include "vr/xr_host.h"
 #include "vr/survivor_native.h"
+#include "vr/survivor_model.h"
 #include "vr/hands_rip.h"
 #include "transform_matrix.h"
 #include "hw/pvr/ta_ctx.h"
@@ -675,6 +676,8 @@ static std::vector<GameProfile> makeProfiles()
 	p = GameProfile();
 	p.gameId = " BIOHAZARD  GUN SURVIVOR2";
 	p.gunMenu = true;
+	p.model.kind = hands::Source::SurvivorGuns;
+	p.model.file = hands::survivorGuns()[0].file;
 	p.liveFocalAddr = 0x457abc;
 	p.focalGuards[0] = { 0x23749c, 0xe00c };
 	p.focalGuards[1] = { 0x23749e, 0xd504 };

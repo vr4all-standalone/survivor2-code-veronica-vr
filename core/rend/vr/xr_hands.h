@@ -44,6 +44,8 @@ const HandsModel *handsModel();
 // (ArcadeGunStem, the menu's "Arcade gun") and zapper.glb ("Zapper"), and any the player adds. Arcade:
 // xr_gun.h's own (v1's arcade gun, always there), now only the hidden last resort, never on the menu.
 enum class GunKind { Arcade = 0, Pistol = 2, Rifle = 3 };
+// Native IDs occupy 1024 + ID; folder indices are capped below 1024.
+constexpr int NativeSurvivorGunBase = 1024;
 constexpr int OwnGuns = 4;	// the first of the folder guns (GunKind and vr.Gun)
 // The folder gun the hand falls back to without the in-game pistol: the bundled Arcade gun's file name
 // (without .glb, any case)

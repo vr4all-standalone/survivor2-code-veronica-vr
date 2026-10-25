@@ -1762,7 +1762,12 @@ bool loadGunCache(const std::string& path, const GunTarget& target)
 
 bool saveGunCache(const std::vector<uint8_t>& data, const std::string& path, const GunTarget& target)
 {
-	if (path.empty() || !validateGunCache(data, target))
+	return validateGunCache(data, target) && saveModelCacheAtomic(data, path);
+}
+
+bool saveModelCacheAtomic(const std::vector<uint8_t>& data, const std::string& path)
+{
+	if (path.empty())
 		return false;
 	try
 	{
@@ -1790,6 +1795,8 @@ bool saveGunCache(const std::vector<uint8_t>& data, const std::string& path, con
 	}
 	catch (const std::exception&)
 	{
+		std::error_code ignored;
+		try { std::filesystem::remove(std::filesystem::u8path(path + ".part"), ignored); } catch (...) {}
 		return false;
 	}
 }

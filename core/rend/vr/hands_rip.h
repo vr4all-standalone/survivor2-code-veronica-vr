@@ -39,7 +39,7 @@ namespace vr::hands
 // and the file it's kept in, in the data directory.
 struct Source
 {
-	enum Kind { None, AgentsPistol, HerosStaff, CmGuns, LupinGun } kind = None;
+	enum Kind { None, AgentsPistol, HerosStaff, CmGuns, LupinGun, SurvivorGuns } kind = None;
 	const char *file = "";
 	Parts pistol {};		// AgentsPistol: the textures in the game over scene
 	StaffParts staff {};	// HerosStaff: the textures in the attract demo and the story's intro
@@ -48,12 +48,12 @@ struct Source
 	GunTarget guns[3] {};
 	// LupinGun: watch the neutral attract sequence until a complete gun appears.
 	float prepSeconds = 180.f;
-	bool gunModels() const { return kind == CmGuns || kind == LupinGun; }
+	bool gunModels() const { return kind == CmGuns || kind == LupinGun || kind == SurvivorGuns; }
 	// The file modelPath() names (CmGuns: the agents' pistol's, the one the run is for, for the
 	// "made before" line; the headset reads each gun's own file: xr_hands.h gunModel())
-	const char *modelFile() const { return gunModels() ? guns[1].file : file; }
+	const char *modelFile() const { return kind == SurvivorGuns ? file : gunModels() ? guns[1].file : file; }
 	const char *name() const {
-		return kind == LupinGun ? "the in-game pistol" : kind == CmGuns ? "the guns" : kind == HerosStaff ? "the hero's staff" : "the agent's hands and pistol";
+		return kind == SurvivorGuns ? "the in-game weapons" : kind == LupinGun ? "the in-game pistol" : kind == CmGuns ? "the guns" : kind == HerosStaff ? "the hero's staff" : "the agent's hands and pistol";
 	}
 };
 
@@ -69,11 +69,15 @@ void observePass(const rend_context& ctx, const RenderPass& pass, const RenderPa
 // The model to draw changed since the last call: one was just made, or another game started
 // (the renderer loads it again then).
 bool takeNewModel();
+// All eight strict caches are ready for this session; skipped/failed preparation stays fallback.
+bool survivorModelsReady();
 
 // The game is being run to the scene: no player input, a panel instead of the game.
 bool preparing();
 // How far along that is, 0..1 (a guess from the time the run usually takes).
 float prepProgress();
+// A preparation panel was successfully submitted to the XR runtime.
+void prepPresented();
 // The player doesn't want to wait: the arcade gun this time.
 void skipPrep();
 

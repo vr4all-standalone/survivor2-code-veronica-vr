@@ -3029,8 +3029,9 @@ bool frame()
 	const bool staff = source != nullptr && source->kind == hands::Source::HerosStaff;
 	const bool cmGuns = source != nullptr && source->kind == hands::Source::CmGuns;
 	const bool lupinGun = source != nullptr && source->kind == hands::Source::LupinGun;
-	const bool gunModels = cmGuns || lupinGun;
-	const char *title = lupinGun ? "LUPIN THE THIRD VR" : cmGuns ? "CONFIDENTIAL MISSION VR" : staff ? "THE MAZE OF THE KINGS VR" : "THE HOUSE OF THE DEAD 2 VR";
+	const bool survivorGuns = source != nullptr && source->kind == hands::Source::SurvivorGuns;
+	const bool gunModels = cmGuns || lupinGun || survivorGuns;
+	const char *title = survivorGuns ? "BIOHAZARD GUN SURVIVOR 2 VR" : lupinGun ? "LUPIN THE THIRD VR" : cmGuns ? "CONFIDENTIAL MISSION VR" : staff ? "THE MAZE OF THE KINGS VR" : "THE HOUSE OF THE DEAD 2 VR";
 	// CM VR 1.2: Confidential Mission's panels in its start screen's colours (VR4All's: the panel, its
 	// line, violet, cream, muted grey, lime)
 	const glm::vec3 violet(169 / 255.f, 155 / 255.f, 1.f), cream(248 / 255.f, 245 / 255.f, 239 / 255.f), muted(155 / 255.f, 165 / 255.f, 180 / 255.f);
@@ -3046,8 +3047,8 @@ bool frame()
 		panel.lines = {
 			{ title, 0.085f, violet },
 			{ "", 0.03f, cream },
-			{ lupinGun ? "Making your pistol from your game files (once)" : "Making your guns from your game files (once)", 0.064f, cream },
-			{ lupinGun ? "Watching the attract demo, only this once" : "About a minute or two, only this once", 0.047f, muted },
+			{ survivorGuns ? "Preparing your in-game weapons from your cartridge" : lupinGun ? "Making your pistol from your game files (once)" : "Making your guns from your game files (once)", 0.064f, cream },
+			{ survivorGuns ? "Only this once" : lupinGun ? "Watching the attract demo, only this once" : "About a minute or two, only this once", 0.047f, muted },
 		};
 		panel.progress = hands::prepProgress();
 		panel.footer = "B: skip (the Arcade gun this time)";
@@ -3056,9 +3057,9 @@ bool frame()
 		panel.lines = {
 			{ title, 0.085f, violet },
 			{ "", 0.03f, cream },
-			{ "Got it. The gun from your game is in your hand.", 0.064f, cream },
+			{ survivorGuns ? "Ready. Your in-game weapons follow your equipped weapon." : "Got it. The gun from your game is in your hand.", 0.064f, cream },
 			// (as the menu's Reload has it: vr.Reload 1, pointing away is enough)
-			{ config::VrReload == 1 ? "Reload: B, or point it away from the screen." : "Reload: B, or point it away from the screen and pull.",
+			{ survivorGuns ? "Pickups, ammunition and reload work as in the game." : config::VrReload == 1 ? "Reload: B, or point it away from the screen." : "Reload: B, or point it away from the screen and pull.",
 					0.047f, muted },
 		};
 	else if (preparing)
@@ -3300,7 +3301,9 @@ bool frame()
 	endInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 	endInfo.layerCount = render && ok ? 1 : 0;
 	endInfo.layers = layers;
-	XRCHECK(XR(xrEndFrame)(session, &endInfo));
+	const bool submitted = XRCHECK(XR(xrEndFrame)(session, &endInfo));
+	if (submitted && render && ok && showPanel && !menuOpen && preparing)
+		hands::prepPresented();
 	return render && ok;
 }
 

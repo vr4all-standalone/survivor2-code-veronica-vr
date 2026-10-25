@@ -32,6 +32,8 @@
 */
 #include "xr_hands.h"
 #include "hands_rip.h"
+#include "survivor_prep.h"
+#include "survivor_model.h"
 #include "glb_mesh.h"
 #include "xr_own.h"
 #include "rend/vr_reproject.h"
@@ -106,6 +108,20 @@ struct Slot
 };
 constexpr int GameSlot = 0, Slots = 4;
 Slot slots[Slots];
+Slot survivorSlots[8];
+bool survivorBankTried = false, survivorBankLoaded = false;
+int survivorHeld[2] {};
+static_assert(NativeSurvivorGunBase == hands::NativeSurvivorGunBase);
+
+bool survivorSource() {
+	const hands::Source *source = gameModelSource();
+	return source != nullptr && source->kind == hands::Source::SurvivorGuns;
+}
+int survivorIndex(GunKind kind) {
+	if (!hands::survivorKind((int)kind)) return -1;
+	const auto *gun = hands::survivorGun((int)kind - NativeSurvivorGunBase);
+	return gun == nullptr ? -1 : (int)(gun - hands::survivorGuns().data());
+}
 std::string gunLogged;	// chosenGun()'s line, as last logged
 bool rifleHeld[2];		// each player's hand holds the assault rifle (handGun()), as last logged
 bool rifleModel[2];		// ... and with it the rifle's model (the in-game pistol's pickup), as last logged
@@ -397,10 +413,43 @@ void refresh()
 	termHands();
 	for (Slot& slot : slots)
 		slot = Slot();
+	for (Slot& slot : survivorSlots)
+		slot = Slot();
+	survivorBankTried = survivorBankLoaded = false;
+	survivorHeld[0] = survivorHeld[1] = 0;
 	gunLogged.clear();
 	rifleHeld[0] = rifleHeld[1] = false;
 	rifleModel[0] = rifleModel[1] = false;
 	own::scan();	// (another game: maybe another folder)
+}
+
+// Read and upload the complete bounded native bank at renderer initialization/refresh.
+// An incomplete bank remains the licensed fallback, including after skip/failure.
+void preloadSurvivorBank()
+{
+	if (!survivorSource() || !config::VrGameHands || !hands::survivorModelsReady()) return;
+	if (!survivorBankTried)
+	{
+		survivorBankTried = true;
+		survivorBankLoaded = true;
+		for (size_t i = 0; i < hands::survivorGuns().size(); ++i)
+		{
+			const auto& gun = hands::survivorGuns()[i];
+			Slot& slot = survivorSlots[i];
+			slot.tried = true;
+			const auto path = get_writable_data_path(gun.file);
+			slot.loaded = hands::loadSurvivorGunCache(path, gun.id)
+					&& load(slot.model, path, std::string(), slot.missing);
+			survivorBankLoaded = survivorBankLoaded && slot.loaded;
+		}
+		if (!survivorBankLoaded)
+		{
+			for (Slot& slot : survivorSlots) slot = Slot();
+			WARN_LOG(RENDERER, "XR: incomplete or invalid Survivor native weapon bank, Arcade gun this session");
+		}
+	}
+	if (survivorBankLoaded && initGl())
+		for (Slot& slot : survivorSlots) upload(slot.model);
 }
 
 // A gun of the player's own into `model`, as Confidential Mission's guns are (gun space: the
@@ -546,6 +595,7 @@ void refreshOwn()
 	std::vector<std::unique_ptr<OwnGun>> next;
 	for (const own::GunFile& file : own::guns())
 	{
+		if (next.size() >= (size_t)(NativeSurvivorGunBase - OwnGuns)) break;
 		std::unique_ptr<OwnGun> gun;
 		for (auto& old : ownGuns)
 			if (old != nullptr && old->file.path == file.path && old->file.stamp == file.stamp)
@@ -594,7 +644,7 @@ bool readOwn(int i)
 int ownIndex(GunKind kind)
 {
 	const int i = (int)kind - OwnGuns;
-	return i >= 0 && i < (int)ownGuns.size() ? i : -1;
+	return (int)kind < NativeSurvivorGunBase && i >= 0 && i < (int)ownGuns.size() ? i : -1;
 }
 
 bool selectableGuns() {
@@ -626,6 +676,13 @@ const HandsModel *gunModel(GunKind kind)
 	refresh();
 	if (kind == GunKind::Arcade || !selectableGuns())
 		return nullptr;
+	if (hands::survivorKind((int)kind))
+	{
+		preloadSurvivorBank();
+		const int i = survivorIndex(kind);
+		return survivorSource() && config::VrGameHands && hands::survivorModelsReady()
+				&& survivorBankLoaded && i >= 0 ? &survivorSlots[i].model.info : nullptr;
+	}
 	if ((int)kind >= OwnGuns)
 	{
 		// (read by chosenGun(), the chosen one only)
@@ -633,6 +690,7 @@ const HandsModel *gunModel(GunKind kind)
 		const int i = ownIndex(kind);
 		return i >= 0 && ownGuns[i]->loaded ? &ownGuns[i]->model.info : nullptr;
 	}
+	if (survivorSource() || (int)kind < 0 || (int)kind >= Slots) return nullptr;
 	Slot& slot = slots[(int)kind];
 	if (!slot.tried)
 	{
@@ -660,6 +718,7 @@ const HandsModel *gunModel(GunKind kind)
 
 bool gunComplete(GunKind kind)
 {
+	if (hands::survivorKind((int)kind)) return gunModel(kind) != nullptr;
 	if ((int)kind >= OwnGuns)
 	{
 		// (offered, read or not)
@@ -667,11 +726,16 @@ bool gunComplete(GunKind kind)
 		const int i = ownIndex(kind);
 		return i >= 0 && ownGuns[i]->valid;
 	}
-	return kind == GunKind::Arcade || (gunModel(kind) != nullptr && (slots[(int)kind].model.flags & 2) != 0);
+	return kind == GunKind::Arcade || ((int)kind >= 0 && (int)kind < Slots && gunModel(kind) != nullptr && (slots[(int)kind].model.flags & 2) != 0);
 }
 
 const char *gunName(GunKind kind)
 {
+	if (hands::survivorKind((int)kind))
+	{
+		const auto *gun = hands::survivorGun((int)kind - NativeSurvivorGunBase);
+		return gun == nullptr ? "unknown native weapon" : gun->name;
+	}
 	if ((int)kind >= OwnGuns)
 	{
 		const int i = ownIndex(kind);
@@ -695,7 +759,9 @@ GunKind chosenGun()
 		return GunKind::Arcade;	// (another game's own model takes no choosing: handModel())
 	// the assault rifle's model too, read at the start with the other guns (drawHands() puts it on
 	// the GPU with them): at the pickup, mid-play, it could cost the headset a frame (Ruling S33)
-	if (config::VrGameHands)
+	if (survivorSource())
+		preloadSurvivorBank();
+	else if (config::VrGameHands)
 		gunModel(GunKind::Rifle);
 	// vr.Gun 4 and over: the folder gun vr.GunFile names, its file name without .glb in any case, as the
 	// scan folds it; any other setting the in-game pistol (1.1's 0 Auto, 2 the cabinet gun, 3 the arcade
@@ -738,6 +804,7 @@ GunKind chosenGun()
 			own = i;
 			if (why.empty())
 				why = !config::VrGameHands ? "the game's models are off"
+						: survivorSource() ? (survivorBankLoaded ? "automatic native weapon selection" : "the native weapon bank is unavailable")
 						: slots[(int)GunKind::Pistol].missing ? "the in-game pistol is not made yet" : "the in-game pistol can't be read";
 		}
 		else
@@ -766,6 +833,24 @@ GunKind handGun(int player)
 	// fires the rifle's rounds (CM VR 1.2 spec section 2: gunKnocks' Shot and Auto knocks, each with its
 	// kick and flash at that gun's muzzle), the pistol too without the rifle's model.
 	const GunKind held = chosenGun();
+	if (survivorSource())
+	{
+		vr::GunState native {};
+		const bool valid = vr::gunState(player, native) && native.valid;
+		bool automatic = config::VrGun < OwnGuns;
+#ifndef __ANDROID__
+		automatic = automatic && !config::VrBuiltInGun;
+#endif
+		const GunKind selected = (GunKind)hands::survivorHandChoice(player, automatic, config::VrGameHands,
+				hands::survivorModelsReady() && survivorBankLoaded, valid, native.nativeWeapon,
+				hands::survivorGun(native.nativeWeapon) != nullptr, (int)held);
+		if (survivorHeld[player] != (int)selected)
+		{
+			survivorHeld[player] = (int)selected;
+			NOTICE_LOG(RENDERER, "XR: P%d hand: %s", player + 1, gunName(selected));
+		}
+		return selected;
+	}
 	const bool model = held == GunKind::Pistol && handModel(GunKind::Rifle) != nullptr;
 	// (not read: the emulator stopped, the VR menu open: the hand keeps what it holds)
 	vr::GunState gun;
@@ -790,6 +875,7 @@ GunKind handGun(int player)
 
 const HandsModel *handModel(GunKind kind)
 {
+	if (hands::survivorKind((int)kind)) return config::VrGameHands ? gunModel(kind) : nullptr;
 	if ((int)kind >= OwnGuns)
 		return gunModel(kind);
 	if (!config::VrGameHands)
@@ -802,11 +888,12 @@ std::vector<GunChoice> gunChoices()
 	// another game's own model takes no choosing: one choice, the row locked (vr.Gun kept)
 	if (!selectableGuns())
 		return { { (int)config::VrGun, config::VrGameHands && handsModel() != nullptr ? "The game's own" : "Arcade gun", true, true } };
+	preloadSurvivorBank();
 	// (with the game's own models off the pistol isn't made: the row passes it)
 	std::vector<GunChoice> choices {
-		{ 1, gameModelSource() ? "In-game pistol" : "Arcade gun",
-          !gameModelSource() || (config::VrGameHands && gunModel(GunKind::Pistol) != nullptr),
-          !gameModelSource() || gunComplete(GunKind::Pistol) },
+		{ 1, survivorSource() ? "In-game weapons" : gameModelSource() ? "In-game pistol" : "Arcade gun",
+          !gameModelSource() || (config::VrGameHands && (survivorSource() ? hands::survivorModelsReady() && survivorBankLoaded : gunModel(GunKind::Pistol) != nullptr)),
+          !gameModelSource() || (survivorSource() ? survivorBankLoaded : gunComplete(GunKind::Pistol)) },
 	};
 	// the folder guns, whatever vr.GameHands says: the bundled ones first (a skipped one isn't made)
 	refreshOwn();
@@ -821,6 +908,9 @@ void drawHands(const glm::mat4& viewProj, const glm::vec3& eyePos, const HandsVi
 	for (Slot& slot : slots)
 		if (slot.loaded && view.model == &slot.model.info)
 			found = &slot.model;
+	for (Slot& slot : survivorSlots)
+		if (slot.loaded && view.model == &slot.model.info)
+			found = &slot.model;
 	for (auto& gun : ownGuns)
 		if (gun->loaded && view.model == &gun->model.info)
 			found = &gun->model;
@@ -832,6 +922,8 @@ void drawHands(const glm::mat4& viewProj, const glm::vec3& eyePos, const HandsVi
 	for (Slot& slot : slots)
 		if (slot.loaded)
 			upload(slot.model);
+	for (Slot& slot : survivorSlots)
+		if (slot.loaded) upload(slot.model);
 	for (auto& gun : ownGuns)
 		if (gun->loaded)
 		{
@@ -876,6 +968,8 @@ void termHands()
 		glcache.DeleteProgram(program);
 	program = 0;
 	for (Slot& slot : slots)
+		releaseGl(slot.model);
+	for (Slot& slot : survivorSlots)
 		releaseGl(slot.model);
 	// (their vertices and textures dropped once uploaded: read again from the file when next chosen)
 	for (auto& gun : ownGuns)
