@@ -9,6 +9,7 @@
 */
 
 #include "reios.h"
+#include "rend/vr/survivor_native.h"
 
 #include "reios_elf.h"
 
@@ -715,6 +716,8 @@ void DYNACALL reios_trap(Sh4Context *ctx, u32 op)
 {
 	verify(op == REIOS_OPCODE);
 	u32 pc = ctx->pc - 2;
+	if (vr::survivor::handleTrap(ctx, pc))
+		return;
 
 	u32 mapd = SYSCALL_ADDR(pc);
 

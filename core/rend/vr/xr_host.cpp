@@ -12,6 +12,8 @@
 	Copyright 2026 mikermak. This file is part of Flycast and is distributed under the GNU GPL v2 or later.
 */
 #include "xr_host.h"
+#include "survivor_native.h"
+#include "survivor_control.h"
 
 #ifdef USE_OPENXR
 #include "xr_controllers.h"
@@ -396,7 +398,7 @@ bool initActions()
 			|| !createAction(recenterAction, "recenter", "Recenter", XR_ACTION_TYPE_BOOLEAN_INPUT)
 			|| !createAction(laserAction, "laser", "Laser on/off", XR_ACTION_TYPE_BOOLEAN_INPUT)
 			|| !createAction(hapticAction, "recoil", "Recoil", XR_ACTION_TYPE_VIBRATION_OUTPUT, true)
-			|| !createAction(stickAction, "stick", "Menus (D-pad), world size", XR_ACTION_TYPE_VECTOR2F_INPUT)
+			|| !createAction(stickAction, "stick", "Menus (D-pad), world size", XR_ACTION_TYPE_VECTOR2F_INPUT, true)
 			|| !createAction(gripAction, "grip", "Rack the slide; hold for world size", XR_ACTION_TYPE_FLOAT_INPUT, true))
 		return false;
 	// Either trigger fires; shooting away from the screen reloads. A: player 1's Start. X: the
@@ -708,7 +710,7 @@ bool init()
 #endif
 	createInfo.enabledExtensionCount = (u32)extensions.size();
 	createInfo.enabledExtensionNames = extensions.data();
-	strcpy(createInfo.applicationInfo.applicationName, "Lupin the Third VR");
+	strcpy(createInfo.applicationInfo.applicationName, "Survivor 2 - Code: Veronica VR");
 	createInfo.applicationInfo.applicationVersion = 1;
 	strcpy(createInfo.applicationInfo.engineName, "Flycast");
 	createInfo.applicationInfo.engineVersion = 1;
@@ -1274,10 +1276,11 @@ float autoKnock(int hand)
 	return haptic(hand, 0.02f, 0.6f);
 }
 
-glm::vec2 stickAction2()
+glm::vec2 stickAction2(int hand = -1)
 {
 	XrActionStateGetInfo info { XR_TYPE_ACTION_STATE_GET_INFO };
 	info.action = stickAction;
+	if (hand >= 0) info.subactionPath = handPaths[hand];
 	XrActionStateVector2f stick { XR_TYPE_ACTION_STATE_VECTOR2F };
 	if (!XR_SUCCEEDED(XR(xrGetActionStateVector2f)(session, &info, &stick)) || !stick.isActive)
 		return glm::vec2(0.f);
@@ -1561,6 +1564,8 @@ bool triggerHeld(const Gun& g, float pull)
 void updateGun(Gun& g, XrTime time, const XrSpaceLocation *locations, const bool *tracked, const float *pulls,
 		u32 extra, bool slide, bool live = true)
 {
+	const bool survivor = vr::survivor::game();
+	if (survivor) g.gunRam = true;
 	const float pull = pulls[g.hand];
 	const bool trigger = triggerHeld(g, pull);
 
@@ -1683,7 +1688,7 @@ void updateGun(Gun& g, XrTime time, const XrSpaceLocation *locations, const bool
 		// A gun in each hand leaves no hand for the slide: pointing a gun at the floor
 		// reloads it instead (a gun that's held: not while the hand holds its controller).
 		// With vr.Reload 1 pointing away from the screen does (below), once each time.
-		if (!slide && live && holds(g.hand) == Holds::Gun && config::VrReload != 1)
+		if (!survivor && !slide && live && holds(g.hand) == Holds::Gun && config::VrReload != 1)
 		{
 			if (!g.pointedDown && d.y < -0.75f)
 			{
@@ -1697,6 +1702,13 @@ void updateGun(Gun& g, XrTime time, const XrSpaceLocation *locations, const bool
 		}
 	}
 
+	if (survivor)
+	{
+		if (live) gunKnocks(g, time, trigger);
+		g.triggerWas = trigger;
+		if (!live) { g.triggerWait = true; g.pullAt = 0; g.shotsDue = g.autosDue = g.clicksDue = 0; }
+		return; // Native cabinet/ray input is published together by updateLightgun.
+	}
 	if (!live)
 	{
 		// The game is paused (the VR menu): the gun is only drawn where the hand is. A trigger
@@ -2081,6 +2093,7 @@ void updateLightgun(XrTime time)
 	const bool preparing = hands::preparing();
 	if (!focused)
 	{
+		if (vr::survivor::game()) vr::survivor::neutral();
 		// headset menu or app in the background: let go of everything
 		if (config::VrXrGun && !preparing && !menuOpen)
 			for (const Gun& g : guns)
@@ -2099,7 +2112,10 @@ void updateLightgun(XrTime time)
 	sync.countActiveActionSets = 1;
 	sync.activeActionSets = &active;
 	if (!XR_SUCCEEDED(XR(xrSyncActions)(session, &sync)))
+	{
+		if (vr::survivor::game()) vr::survivor::neutral();
 		return;
+	}
 	if (!boolAction(startAction, Right))
 		startSwallow = false;
 	// The left Start, and the settings menu just asked for (menuEdge). Where the menu is the left
@@ -2168,11 +2184,15 @@ void updateLightgun(XrTime time)
 		NOTICE_LOG(INPUT, "XR: menu button");
 	if (menuOpen)
 	{
+		if (vr::survivor::game()) vr::survivor::neutral();
 		updateMenu(time, menuEdge, skip, skipEdge);
 		return;
 	}
 	if (menuEdge)
+	{
 		menu::open(headPose());
+		if (vr::survivor::game()) { vr::survivor::neutral(); return; }
+	}
 	if (!config::VrXrGun)
 		return;
 	// the left thumbstick click: recenter
@@ -2210,7 +2230,7 @@ void updateLightgun(XrTime time)
 	}
 	laserWas = laser;
 	const glm::vec2 stick = stickAction2();
-	const u32 dpad = adjustWorldSize(time, stick) ? dpadFromStick(glm::vec2(0.f)) : dpadFromStick(stick);
+	const u32 dpad = vr::survivor::game() ? 0 : adjustWorldSize(time, stick) ? dpadFromStick(glm::vec2(0.f)) : dpadFromStick(stick);
 
 	XrSpaceLocation locations[2];
 	bool tracked[2];
@@ -2218,6 +2238,36 @@ void updateLightgun(XrTime time)
 	float pulls[2];
 	for (int hand : { Left, Right })
 		pulls[hand] = tracked[hand] ? floatAction(triggerAction, hand) : 0.f;
+	if (vr::survivor::game())
+	{
+		static vr::survivor::ControlGate gate;
+		static unsigned generation = ~0u;
+		if (generation != vr::survivor::generation()) { generation = vr::survivor::generation(); gate.reset(); }
+		Gun& nativeGun = guns[0];
+		const int other = 1 - nativeGun.hand;
+		if (!nativeGun.triggerWas && ((tracked[other] && !tracked[nativeGun.hand]) || (pulls[other] > .6f && pulls[nativeGun.hand] < .35f)))
+		{ const bool fallback = !tracked[nativeGun.hand]; nativeGun.hand = other; if (fallback) gate.reset(); }
+		const glm::vec2 move = stickAction2(Left), turning = stickAction2(Right);
+		vr::survivor::ControlSample sample;
+		sample.focused = focused && originSet && vr::survivor::ready();
+		sample.menu = menuOpen; sample.aimTracked = tracked[nativeGun.hand]; sample.motionTracked = tracked[Left] && tracked[Right];
+		sample.x = move.x; sample.y = move.y; sample.turn = turning.x;
+		sample.pull = pulls[nativeGun.hand]; sample.action = skip && !skipSwallow; sample.enter = rightStart || leftStart;
+		const auto control = gate.update(sample);
+		if (control.input.buttons) p1Armed = true;
+		updateGun(nativeGun, time, locations, tracked, pulls, 0, false, sample.focused && !menuOpen);
+		if (control.aim)
+		{
+			const glm::vec3 o = nativeGun.view.restMuzzle / worldScale(), d = nativeGun.view.restForward;
+			vr::survivor::publishAim({o.x,o.y,o.z}, {d.x,d.y,d.z});
+		}
+		else vr::survivor::neutral();
+		static u32 lastNativeButtons = ~0u;
+		if (lastNativeButtons != control.input.buttons) { lastNativeButtons = control.input.buttons; NOTICE_LOG(INPUT,"XR: Survivor cabinet buttons %u", lastNativeButtons); }
+		vr::survivor::cabinet.publish(control.input, vr::survivor::nowMs());
+		if (control.snap) { NOTICE_LOG(INPUT,"XR: Survivor snap requested %d",control.snap); vr::survivor::requestTurn(control.snap); }
+		return;
+	}
 	// Solo retains the original controls: right Start is P1, left Start joins P2. Once both
 	// players are in, Start/reload follow each player's assigned hand. A held join press
 	// remains P2's until release so the layout change cannot turn it into a P1 Start.

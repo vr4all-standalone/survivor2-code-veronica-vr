@@ -4,6 +4,7 @@
 	Copyright 2026 mikermak. This file is part of Flycast and is distributed under the GNU GPL v2 or later.
 */
 #include "xr_labels.h"
+#include "survivor_native.h"
 #include "xr_controllers.h"
 #include "xr_host.h"
 #include "xr_own.h"
@@ -64,6 +65,27 @@ const Words Kinds[] {
 			{ controllers::Trigger, "Trigger - P2 Shoot" }, { controllers::Stick, "Stick - Recenter" } },
 		{ { controllers::B, "Pad click - P1 Reload" }, { controllers::A, "Menu - P1 Start" }, { controllers::Trigger, "Trigger - P1 Shoot" },
 			{ controllers::Stick, "Stick - Laser" } } } },
+};
+const Words KindsSurvivor[] {
+	{ "/interaction_profiles/oculus/touch_controller", {
+		{ { controllers::Y, "Y - Gun button" }, { controllers::X, "X - Start" }, { controllers::Menu, "Menu" },
+			{ controllers::Trigger, "Trigger - Shoot" }, { controllers::Stick, "Move; click - Recenter" } },
+		{ { controllers::B, "B - Gun button" }, { controllers::A, "A - Start" }, { controllers::Trigger, "Trigger - Shoot" },
+			{ controllers::Stick, "Snap turn; click - Laser" } } } },
+	{ "/interaction_profiles/valve/index_controller", {
+		{ { controllers::Y, "B - Gun button" }, { controllers::X, "A - Start" }, { controllers::Menu, "Pad squeeze - Menu" },
+			{ controllers::Trigger, "Trigger - Shoot" }, { controllers::Stick, "Move; click - Recenter" } },
+		{ { controllers::B, "B - Gun button" }, { controllers::A, "A - Start" }, { controllers::Trigger, "Trigger - Shoot" },
+			{ controllers::Stick, "Snap turn; click - Laser" } } } },
+	{ "/interaction_profiles/htc/vive_controller", {
+		{ { controllers::Y, "Pad click - Gun button" }, { controllers::X, "Menu - Start (hold: Menu)" },
+			{ controllers::Trigger, "Trigger - Shoot" } },
+		{ { controllers::B, "Pad click - Gun button" }, { controllers::A, "Menu - Start" }, { controllers::Trigger, "Trigger - Shoot" } } } },
+	{ "/interaction_profiles/microsoft/motion_controller", {
+		{ { controllers::Y, "Pad click - Gun button" }, { controllers::X, "Menu - Start (hold: Menu)" },
+			{ controllers::Trigger, "Trigger - Shoot" }, { controllers::Stick, "Move; click - Recenter" } },
+		{ { controllers::B, "Pad click - Gun button" }, { controllers::A, "Menu - Start" }, { controllers::Trigger, "Trigger - Shoot" },
+			{ controllers::Stick, "Snap turn; click - Laser" } } } },
 };
 // the two-player P1-left layout: each hand's buttons its own player's, P1 on the left and P2 on the right (the same
 // buttons and order as Kinds)
@@ -148,6 +170,7 @@ const char *const HandName[2] { "left", "right" };
 // Active button assignment; solo labels always keep P1 on the right.
 const Words& wordsFor(const char *profile)
 {
+	if (vr::survivor::game()) { for (const Words& words : KindsSurvivor) if (profile && !strcmp(profile, words.profile)) return words; return KindsSurvivor[0]; }
 	const Words (&kinds)[std::size(Kinds)] = p1Hand() == 0 ? KindsP1Left : Kinds;
 	for (const Words& words : kinds)
 		if (profile != nullptr && !strcmp(profile, words.profile))

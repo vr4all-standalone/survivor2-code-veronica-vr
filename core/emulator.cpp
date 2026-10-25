@@ -658,6 +658,11 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		// Reject other games through the usual load-error path before devices/Start/run.
 		if (const char *error = vr::standaloneGameError(settings.content.gameId))
 			throw FlycastException(error);
+        const char *setName = settings.platform.isNaomi() && CurrentCartridge
+                ? CurrentCartridge->GetSetName() : "";
+        if (const char *error = vr::standaloneSetError(setName))
+            throw FlycastException(error);
+
 		mcfg_DestroyDevices();
 		mcfg_CreateDevices();
 		if (settings.platform.isNaomi())

@@ -27,6 +27,7 @@
 #include "network/output.h"
 #include "hw/naomi/printer.h"
 #include "input/haptic.h"
+#include "rend/vr/survivor_input.h"
 
 #include <algorithm>
 #include <array>
@@ -1089,7 +1090,15 @@ public:
 		encoder_count = 2;
 	}
 protected:
-	const char *get_id() override { return "namco ltd.;FCA-1;Ver1.01;JPN,Multipurpose + Rotary Encoder"; }
+    u16 read_analog_axis(int player, int axisIndex, bool inverted) override {
+        const auto input = vr::survivor::cabinet.read(vr::survivor::nowMs());
+        if (player == 0 && input.owned && settings.content.gameId == " BIOHAZARD  GUN SURVIVOR2") {
+            const s16 value = axisIndex == 0 ? input.yaw : axisIndex == 1 ? input.pitch : axisIndex == 2 ? input.roll : 0;
+            return vr::survivor::axis(value, inverted);
+        }
+        return jvs_io_board::read_analog_axis(player, axisIndex, inverted);
+    }
+    const char *get_id() override { return "namco ltd.;FCA-1;Ver1.01;JPN,Multipurpose + Rotary Encoder"; }
 };
 
 // World Kicks
@@ -2236,6 +2245,15 @@ u32 jvs_io_board::handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buf
 					if ((mapleInputState[p].kcode & (1 << i)) == 0)
 						buttons[p] |= naomi_button_mapping[i];
 #endif
+            if (settings.content.gameId == " BIOHAZARD  GUN SURVIVOR2") {
+                const auto input = vr::survivor::cabinet.read(vr::survivor::nowMs());
+                if (input.owned) {
+                    buttons[0] = 0;
+                    const u32 flags[8] { NAOMI_BTN1_KEY, NAOMI_BTN0_KEY, NAOMI_START_KEY, NAOMI_COIN_KEY,
+                        NAOMI_UP_KEY, NAOMI_DOWN_KEY, NAOMI_SERVICE_KEY, NAOMI_TEST_KEY };
+                    for (int bit = 0; bit < 8; ++bit) if (input.buttons & (1u << bit)) buttons[0] |= flags[bit];
+                }
+            }
 			for (u32& button : buttons)
 			{
 				if ((button & (NAOMI_UP_KEY | NAOMI_DOWN_KEY)) == (NAOMI_UP_KEY | NAOMI_DOWN_KEY))

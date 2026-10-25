@@ -151,6 +151,11 @@ static bool loadBios(const char *biosName, Archive *child_archive, Archive *pare
 	return found_region;
 }
 
+const char *Cartridge::GetSetName() const
+{
+	return game ? game->name : "";
+}
+
 static const Game *FindGame(const char *filename)
 {
 	std::string gameName = get_file_basename(filename);

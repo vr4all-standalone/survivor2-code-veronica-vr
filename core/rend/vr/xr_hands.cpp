@@ -804,7 +804,9 @@ std::vector<GunChoice> gunChoices()
 		return { { (int)config::VrGun, config::VrGameHands && handsModel() != nullptr ? "The game's own" : "Arcade gun", true, true } };
 	// (with the game's own models off the pistol isn't made: the row passes it)
 	std::vector<GunChoice> choices {
-		{ 1, "In-game pistol", config::VrGameHands && gunModel(GunKind::Pistol) != nullptr, gunComplete(GunKind::Pistol) },
+		{ 1, gameModelSource() ? "In-game pistol" : "Arcade gun",
+          !gameModelSource() || (config::VrGameHands && gunModel(GunKind::Pistol) != nullptr),
+          !gameModelSource() || gunComplete(GunKind::Pistol) },
 	};
 	// the folder guns, whatever vr.GameHands says: the bundled ones first (a skipped one isn't made)
 	refreshOwn();

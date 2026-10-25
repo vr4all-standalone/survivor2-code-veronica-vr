@@ -4,6 +4,7 @@
 	Copyright 2026 mikermak. This file is part of Flycast and is distributed under the GNU GPL v2 or later.
 */
 #include "xr_menu.h"
+#include "survivor_native.h"
 #include "xr_hands.h"
 #include "xr_own.h"
 #include "xr_host.h"
@@ -28,12 +29,13 @@ namespace
 constexpr float Distance = 1.2f, BelowEyes = 0.1f;
 constexpr int Left = 0, Right = 1;
 
-const char *const Labels[Rows] { "Resume", "Recenter", "Gun", "Gun angle", "Reload", "2P: P1 left / P2 right", "Laser", "Haptics",
+const char *const Labels[Rows] { "Resume", "Recenter", "Gun", "Gun angle", "Reload", "Two players", "Laser", "Haptics",
 		"World size", "Panel distance", "Wider view", "How to play", "Quit" };
 const char *const HapticsNames[4] { "Off", "Light", "Medium", "Strong" };
 // vr.Haptics' words, saved by the Haptics row (hapticsLevel() reads them, and 1.2's numbers)
 const char *const HapticsWords[4] { "off", "light", "medium", "strong" };
 const char *const ReloadNames[2] { "Shoot off-screen", "Point off-screen" };
+const char *const HandsNames[2] { "P1 left / P2 right", "P1 right / P2 left" };
 constexpr int GunAngleMax = 30;	// vr.GunAngle's range, degrees either way
 
 glm::mat4 model { 1.f };	// the panel: its middle, facing the player (+z)
@@ -115,9 +117,11 @@ std::string value(int row)
 		std::snprintf(s, sizeof(s), gunAngle() == 0 ? "%d" : "%+d", gunAngle());
 		return s;
 	case Reload:
+		if (vr::survivor::game()) return "Native automatic";
 		return ReloadNames[std::clamp((int)config::VrReload, 0, 1)];
 	case Hands:
-		return config::VrDualP1Left ? "On" : "Off";
+		if (vr::survivor::game()) return "Single player";
+		return HandsNames[config::VrDualP1Left ? Left : Right];
 	case Laser:
 		return config::VrLaser ? "On" : "Off";
 	case Haptics:
@@ -129,6 +133,7 @@ std::string value(int row)
 		std::snprintf(s, sizeof(s), "%.0f", (float)config::VrHudDepth);
 		return s;
 	case WiderView:
+		if (vr::survivor::game()) return "Unavailable (not validated)";
 		return std::string(config::VrWiden ? "On" : "Off") + (config::VrWiden != widenAtStart ? " (next start)" : "");
 	case HowToPlay:
 		return howToPlayOn() ? "On" : "Off";
@@ -149,6 +154,7 @@ RowsPanel panel()
 		if (row == GunAngle)
 			r.value += "\xB0";	// (the degree sign: panel text is drawn byte by byte as Latin-1)
 		r.selected = row == selected;
+		if (vr::survivor::game() && (row == Reload || row == Hands || row == WiderView)) r.dim = true;
 		r.stepper = stepper(row);
 		if (row == Gun)
 		{
@@ -166,6 +172,7 @@ RowsPanel panel()
 // change is saved at once; a change of the knock's strength is felt at once in the hand that made it.
 void change(int row, int dir, int hand)
 {
+	if (vr::survivor::game() && (row == Reload || row == Hands || row == WiderView)) return;
 	switch (row)
 	{
 	case Gun:

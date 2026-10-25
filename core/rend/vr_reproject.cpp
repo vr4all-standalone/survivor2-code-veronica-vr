@@ -5,6 +5,7 @@
 */
 #include "vr_reproject.h"
 #include "vr/xr_host.h"
+#include "vr/survivor_native.h"
 #include "vr/hands_rip.h"
 #include "transform_matrix.h"
 #include "hw/pvr/ta_ctx.h"
@@ -669,6 +670,23 @@ static std::vector<GameProfile> makeProfiles()
 	p.model.guns[1] = { "in-game pistol", "gun-lp-pistol.bin", { 0xb80800 }, 24, 24, 0.22f, true,
 			{ 24 }, 12, { 1.f, 0.52442f, 0.08799f }, 0.05f, 0.f, 0.2f };
 	list.push_back(p);
+	// Survivor 2 World BHF2 Ver. E. Scalar focal and HUD depths measured in native rips.
+	// Native collision rays are transformed independently in survivor_native.cpp.
+	p = GameProfile();
+	p.gameId = " BIOHAZARD  GUN SURVIVOR2";
+	p.gunMenu = true;
+	p.liveFocalAddr = 0x457abc;
+	p.focalGuards[0] = { 0x23749c, 0xe00c };
+	p.focalGuards[1] = { 0x23749e, 0xd504 };
+	p.focalGuards[2] = { 0x2374a0, 0xf348 };
+	p.focalGuards[3] = { 0x2374a2, 0xf53a };
+	p.focal = 381.4189f;
+	p.farOutBelowW = .999f; // Native 3D is clipped at W=1; retain real near-plane walls/floors.
+	p.hudW = 0.0001f;
+	p.snapMinW = 1.f; p.snapMaxW = 1.12f; p.snapStep = .001f;
+	p.flatScreens = true;
+	p.noShotFlash = true;
+	list.push_back(p);
 	return list;
 }
 static const std::vector<GameProfile> profiles = makeProfiles();
@@ -918,6 +936,7 @@ static u32 gunBlock(const GameProfile *prof, int player)
 
 bool gunState(int player, GunState& out)
 {
+	if (survivor::gunState(player, out)) return true;
 	out = GunState {};
 	if (gunBlock(activeProfile, player) == 0)
 		return false;
@@ -2380,7 +2399,7 @@ void dropShotMarker(rend_context& ctx, const RenderPass& pass, const RenderPass&
 	if (!config::VrReproject || ctx.isRTT || settings.platform.isNaomi2())
 		return;
 	const bool onPC = !xr::enabled();
-	if (onPC)
+	if (onPC || (survivor::game() && config::VrXrSim))
 		ripRequested(ctx, pass, previousPass);
 #ifndef __ANDROID__
 	watchTextures(ctx, pass, previousPass);

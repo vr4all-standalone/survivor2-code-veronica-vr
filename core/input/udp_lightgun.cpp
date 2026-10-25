@@ -30,6 +30,7 @@
 #include "rend/vr_reproject.h"
 #include "rend/vr/xr_sim.h"
 #include "rend/vr/gun_input.h"
+#include "rend/vr/survivor_input.h"
 
 #include <atomic>
 #include <chrono>
@@ -75,6 +76,15 @@ void setButton(int player, u32 key, bool pressed)
 
 void handle(const char *msg)
 {
+#ifndef __ANDROID__
+    if (strncmp(msg, "SVR ", 4) == 0)
+    {
+        vr::survivor::Input input;
+        if (settings.content.gameId == " BIOHAZARD  GUN SURVIVOR2" && vr::survivor::parse(msg, input))
+            vr::survivor::cabinet.publish(input, vr::survivor::nowMs());
+        return;
+    }
+#endif
 #ifndef __ANDROID__
 	if (strncmp(msg, "XR", 2) == 0)
 	{
@@ -183,6 +193,7 @@ void listen(int port)
 
 void onStart(Event, void *)
 {
+    vr::survivor::cabinet.reset();
 	for (auto& input : gunInputs) input = vr::GunInput {};
 	const int port = config::VrUdpPort;
 	if (port <= 0 || running)

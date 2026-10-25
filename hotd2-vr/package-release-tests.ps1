@@ -22,7 +22,7 @@ function Check([string]$name, [bool]$condition) {
     $script:checks++
     if ($condition) { Write-Host "PASS $name" } else { $script:failures++; Write-Host "FAIL $name" -ForegroundColor Red }
 }
-$work = Join-Path $repo ('.cache\lupin-package-tests-' + [guid]::NewGuid().ToString('N'))
+$work = Join-Path $repo ('.cache\survivor-package-tests-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $work -Force | Out-Null
 function Archive([string]$name, [hashtable]$entries) {
     $path = Join-Path $work $name
@@ -41,17 +41,19 @@ function Archive([string]$name, [hashtable]$entries) {
     $path
 }
 try {
-    Check 'Lupin application ID' ($appId -eq 'com.vrlightgunhub.lupin')
-    Check 'Lupin label' ($appLabel -eq 'Lupin the Third VR')
-    Check 'Lupin release base version' ($appVersion -eq '1.0.1')
-    Check 'Lupin setup launcher' ($appLauncher -eq 'com.flycast.emulator.LupinStartActivity')
-    Check 'Lupin PC launcher name' ($playCmd -eq 'Play Lupin the Third.cmd')
+    Check 'Survivor application ID' ($appId -eq 'com.vrlightgunhub.survivor2')
+    Check 'Survivor label' ($appLabel -eq 'Survivor 2 - Code: Veronica VR')
+    Check 'Survivor release base version' ($appVersion -eq '1.0.0')
+    Check 'Survivor setup launcher' ($appLauncher -eq 'com.flycast.emulator.Survivor2StartActivity')
+    Check 'Survivor PC launcher name' ($playCmd -eq 'Play Survivor 2.cmd')
     $banned = @('roms/LUPINSHOO.ZIP','roms/lupinshoo/gds-0018.chd','gds-0018.cue','gds-0018.gdi',
         '317-0325-jpn.pic','data/gun-lp-pistol.bin','rip/frame.txt','shot_00001.png','naomi.zip')
     $entries = @{}; foreach ($name in $banned) { $entries[$name] = 'synthetic fixture' }
     $archive = Archive 'game-data.zip' $entries
     $found = @(Find-GameData $archive)
     Check 'all inherited game-data bans retained' ($found.Count -eq $banned.Count)
+    $archive = Archive 'private-dumps.zip' @{'ram0000.bin'='synthetic';'data/gunsur2.state'='synthetic';'data/gunsur2.nvmem'='synthetic';'build-research/log.txt'='synthetic'}
+    Check 'raw memory saves and private research excluded' (@(Find-GameData $archive).Count -eq 4)
     $archive = Archive 'secrets.zip' @{'release.jks'='synthetic'; 'release-signing.properties'='synthetic'; 'keys/debug.keystore'='synthetic'; '.vrlightgunhub/note.txt'='synthetic'}
     Check 'release signing material is excluded' (@(Find-GameData $archive).Count -eq 4)
     $archive = Archive 'uncredited.zip' @{'data/models/guns/fake.glb'='synthetic'}
@@ -60,7 +62,7 @@ try {
     Check 'credited model accepted' (@(Find-UncreditedModels $archive).Count -eq 0)
     $gpl = Get-Content -LiteralPath (Join-Path $repo 'core/deps/picotcp/LICENSE.GPLv3') -Raw
     $mit = Get-Content -LiteralPath (Join-Path $repo 'core/deps/cgltf/LICENSE') -Raw
-    $licence = "Lupin the Third VR`n$gpl`n$mit"
+    $licence = "Survivor 2 - Code: Veronica VR`n$gpl`n$mit"
     $archive = Archive 'licensed.zip' @{'LICENSE.txt'=$licence}
     Check 'GPL-3 and cgltf notice accepted' (-not (Find-LicenceFault $archive))
     $archive = Archive 'missing-mit.apk' @{'assets/LICENSE.txt'=$gpl}
@@ -74,24 +76,24 @@ try {
     Check 'longer commit with matching prefix rejected' (-not (Test-NamesCommit 'synthetic binary' ([Text.Encoding]::ASCII.GetBytes('v0-1-gabc123f')) 'abc123'))
 
     $tree = @('E: manifest', '  E: uses-permission', '    A: android:name(0x01010003)="com.oculus.permission.RENDER_MODEL"',
-        '  E: application', '    E: activity', '      A: android:name(0x01010003)="com.flycast.emulator.LupinStartActivity"',
+        '  E: application', '    E: activity', '      A: android:name(0x01010003)="com.flycast.emulator.Survivor2StartActivity"',
         '      E: intent-filter', '        E: category', '          A: android:name(0x01010003)="android.intent.category.LAUNCHER"')
-    Check 'manifest launcher parser uses activity owner' (@(Get-LauncherOwners $tree) -join ',' -eq 'com.flycast.emulator.LupinStartActivity')
-    $badging = @("package: name='com.vrlightgunhub.lupin' versionCode='2' versionName='1.0.1-gabc123'", "application-label:'Lupin the Third VR'")
+    Check 'manifest launcher parser uses activity owner' (@(Get-LauncherOwners $tree) -join ',' -eq 'com.flycast.emulator.Survivor2StartActivity')
+    $badging = @("package: name='com.vrlightgunhub.survivor2' versionCode='1' versionName='1.0.0-gabc123'", "application-label:'Survivor 2 - Code: Veronica VR'")
     $hasIdentityCheck = [bool](Get-Command Find-AppIdentityFault -ErrorAction SilentlyContinue)
     Check 'APK metadata validator is independently testable' $hasIdentityCheck
     if ($hasIdentityCheck) {
-        Check 'valid Lupin APK metadata accepted' (@(Find-AppIdentityFault $badging $tree 'abc123' $false).Count -eq 0)
+        Check 'valid Survivor APK metadata accepted' (@(Find-AppIdentityFault $badging $tree 'abc123' $false).Count -eq 0)
         foreach ($case in @(
-            @('package', 'com.vrlightgunhub.lupin', 'com.vrlightgunhub.confmiss'),
-            @('version code', "versionCode='2'", "versionCode='9'"),
-            @('base version', '1.0.1-gabc123', '1.2.0-gabc123'),
-            @('commit version', '1.0.1-gabc123', '1.0.1-gdef456'),
-            @('label', 'Lupin the Third VR', 'Confidential Mission VR'))) {
+            @('package', 'com.vrlightgunhub.survivor2', 'com.vrlightgunhub.confmiss'),
+            @('version code', "versionCode='1'", "versionCode='9'"),
+            @('base version', '1.0.0-gabc123', '1.2.0-gabc123'),
+            @('commit version', '1.0.0-gabc123', '1.0.0-gdef456'),
+            @('label', 'Survivor 2 - Code: Veronica VR', 'Confidential Mission VR'))) {
             $changed = @($badging | ForEach-Object { $_.Replace($case[1],$case[2]) })
             Check "wrong APK $($case[0]) rejected" (@(Find-AppIdentityFault $changed $tree 'abc123' $false).Count -gt 0)
         }
-        $changed = @($tree | ForEach-Object { $_.Replace('LupinStartActivity','CmStartActivity') })
+        $changed = @($tree | ForEach-Object { $_.Replace('Survivor2StartActivity','CmStartActivity') })
         Check 'old setup activity rejected' (@(Find-AppIdentityFault $badging $changed 'abc123' $false).Count -gt 0)
         $changed = @($tree | Where-Object { $_ -notmatch 'RENDER_MODEL' })
         Check 'missing controller-model permission rejected' (@(Find-AppIdentityFault $badging $changed 'abc123' $false).Count -gt 0)
@@ -101,11 +103,11 @@ try {
     $hasPcCheck = [bool](Get-Command Find-PcArchiveFault -ErrorAction SilentlyContinue)
     Check 'portable PC archive validator is independently testable' $hasPcCheck
     if ($hasPcCheck) {
-        $files = @('flycast.exe','emu.cfg','README.txt','LICENSE.txt','Play Lupin the Third.cmd')
-        $readme = 'Lupin the Third VR. Implementation in progress. roms\lupinshoo.zip roms\lupinshoo\gds-0018.chd roms\naomi.zip Play Lupin the Third.cmd'
-        $entries = @{'flycast.exe'='synthetic'; 'emu.cfg'="[config]`npvr.rend = 0`nrend.NativeDepthInterpolation = yes`nvr.Xr = yes"; 'README.txt'=$readme; 'LICENSE.txt'=$licence; 'Play Lupin the Third.cmd'='start "" /D "%~dp0" "%~dp0flycast.exe" "%~dp0roms\lupinshoo.zip"'}
+        $files = @('flycast.exe','emu.cfg','README.txt','LICENSE.txt','Play Survivor 2.cmd','Check Survivor 2 Files.ps1')
+        $readme = 'Survivor 2 - Code: Veronica VR. Implementation in progress. roms\gunsur2.zip roms\naomi.zip Play Survivor 2.cmd'
+        $entries = @{'flycast.exe'='synthetic'; 'emu.cfg'="[config]`npvr.rend = 0`nrend.NativeDepthInterpolation = yes`nvr.Xr = yes"; 'README.txt'=$readme; 'LICENSE.txt'=$licence; 'Check Survivor 2 Files.ps1'='synthetic checker'; 'Play Survivor 2.cmd'='rem Check Survivor 2 Files.ps1; if errorlevel 1 exit /b 1; start "" /D "%~dp0" "%~dp0flycast.exe" "%~dp0roms\gunsur2.zip"'}
         $archive = Archive 'portable-valid.zip' $entries
-        Check 'exact portable Lupin archive accepted' (@(Find-PcArchiveFault $archive $files).Count -eq 0)
+        Check 'exact portable Survivor archive accepted' (@(Find-PcArchiveFault $archive $files).Count -eq 0)
         $goodConfig = $entries['emu.cfg']
         $entries['emu.cfg'] = $goodConfig.Replace('pvr.rend', 'pvrXrend')
         $archive = Archive 'portable-typo-default.zip' $entries
@@ -114,11 +116,15 @@ try {
         $archive = Archive 'portable-vr-off.zip' $entries
         Check 'VR-off portable default rejected' (@(Find-PcArchiveFault $archive $files).Count -gt 0)
         $entries['emu.cfg'] = $goodConfig
-        $goodLauncher = $entries['Play Lupin the Third.cmd']
-        $entries['Play Lupin the Third.cmd'] = $goodLauncher.Replace('lupinshoo.zip','confmiss.zip')
+        $goodLauncher = $entries['Play Survivor 2.cmd']
+        $entries['Play Survivor 2.cmd'] = $goodLauncher.Replace('gunsur2.zip','confmiss.zip')
         $archive = Archive 'portable-wrong-launch.zip' $entries
         Check 'foreign-game launcher rejected' (@(Find-PcArchiveFault $archive $files).Count -gt 0)
-        $entries['Play Lupin the Third.cmd'] = $goodLauncher
+        $entries['Play Survivor 2.cmd'] = $goodLauncher
+        $entries['Play Survivor 2.cmd'] = $goodLauncher.Replace('Check Survivor 2 Files.ps1','missing-check.ps1')
+        $archive = Archive 'unchecked-launch.zip' $entries
+        Check 'launcher that bypasses file readiness rejected' (@(Find-PcArchiveFault $archive $files).Count -gt 0)
+        $entries['Play Survivor 2.cmd'] = $goodLauncher
         # Exercise the actual literal README/config generators and actual launcher, without
         # running the package orchestration or consuming any build artefact.
         $readmeStatement = $ast.EndBlock.Statements | Where-Object {
@@ -129,11 +135,13 @@ try {
         $production = $entries.Clone()
         $production['README.txt'] = $generatedReadme
         $production['emu.cfg'] = $generatedConfig
-        $production['Play Lupin the Third.cmd'] = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'assets/Play Lupin the Third.cmd') -Raw
+        $production['Play Survivor 2.cmd'] = Get-Content -LiteralPath (Join-Path $repo 'survivor2-vr/Play Survivor 2.cmd') -Raw
         $archive = Archive 'portable-production-templates.zip' $production
-        Check 'production README config and launcher satisfy portable checks' (@(Find-PcArchiveFault $archive $files).Count -eq 0)
-        Check 'packaged README explicitly marks implementation in progress' ($generatedReadme.Contains('Implementation in progress.'))
-        $entries['README.txt'] = $readme.Replace('Lupin the Third VR','Confidential Mission VR')
+        $productionFaults = @(Find-PcArchiveFault $archive $files)
+        if ($productionFaults.Count) { $productionFaults | ForEach-Object { Write-Host "Template fault: $_" } }
+        Check 'production README config and launcher satisfy portable checks' ($productionFaults.Count -eq 0)
+        Check 'packaged README explicitly marks unreleased development build' ($generatedReadme.Contains('development build - UNRELEASED'))
+        $entries['README.txt'] = $readme.Replace('Survivor 2 - Code: Veronica VR','Confidential Mission VR')
         $archive = Archive 'portable-wrong-readme.zip' $entries
         Check 'stale CM README rejected' (@(Find-PcArchiveFault $archive $files).Count -gt 0)
         $entries['README.txt'] = $readme
@@ -144,12 +152,12 @@ try {
         $archive = Archive 'portable-missing.zip' $entries
         Check 'missing portable archive file rejected' (@(Find-PcArchiveFault $archive $files).Count -gt 0)
     }
-    $launcher = Join-Path $PSScriptRoot 'assets/Play Lupin the Third.cmd'
-    Check 'Lupin launcher exists' (Test-Path -LiteralPath $launcher)
+    $launcher = Join-Path $repo 'survivor2-vr/Play Survivor 2.cmd'
+    Check 'Survivor launcher exists' (Test-Path -LiteralPath $launcher)
     if (Test-Path -LiteralPath $launcher) {
         $text = Get-Content -LiteralPath $launcher -Raw
         Check 'launcher uses portable working directory' ($text -match 'start\s+""\s+/D\s+"%~dp0"')
-        Check 'launcher selects original Lupin set' ($text.Contains('%~dp0roms\lupinshoo.zip'))
+        Check 'launcher selects original Survivor set' ($text.Contains('%~dp0roms\gunsur2.zip'))
     }
     Write-Host "Release checks: $script:checks total, $script:failures failed"
 } finally {

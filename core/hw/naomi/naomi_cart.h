@@ -72,6 +72,7 @@ public:
 	virtual bool GetBootId(RomBootID *bootId) = 0;
 	u32 getSize() const { return RomSize; }
 
+	const char *GetSetName() const;
 	const Game *game = nullptr;
 
 protected:

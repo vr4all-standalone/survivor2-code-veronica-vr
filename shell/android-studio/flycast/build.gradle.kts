@@ -11,9 +11,9 @@ fun gitVersionName(): String {
     }.standardOutput.asText.get().trim()
 }
 
-// hotd2-vr: Lupin the Third VR's own version. The vr build's versionName is "<hubVersion>-g<commit>"
+// hotd2-vr: Survivor 2 - Code: Veronica VR's own version. The vr build's versionName is "<hubVersion>-g<commit>"
 // (set in androidComponents below); the standalone release starts at versionCode 1.
-val hubVersion = "1.0.1"
+val hubVersion = "1.0.0"
 
 fun gitShortHash(): String {
     return providers.exec {
@@ -97,7 +97,7 @@ android {
         }
         // hotd2-vr: optimised build for sideloading on the Quest, signed with the app's release
         // key ("hub" above), or the public debug key when there is none (a test build only).
-        // The app Lupin the Third VR: its applicationId and versionName are set below
+        // The app Survivor 2 - Code: Veronica VR: its applicationId and versionName are set below
         // (androidComponents), so it installs next to (never over) a regular Flycast.
         create("vr") {
             initWith(getByName("release"))
@@ -115,7 +115,7 @@ android {
                 cmake {
                     arguments += "-DCMAKE_BUILD_TYPE=Release"
                     arguments += "-DUSE_OPENXR=ON"
-                    arguments += "-DVR_STANDALONE_LUPIN=ON"
+                    arguments += "-DVR_STANDALONE_SURVIVOR2=ON"
                 }
             }
             // The Quest is arm64. (Not with -Pandroid.injected.build.abi: that's the IDE's
@@ -206,9 +206,9 @@ abstract class LicenceText : DefaultTask() {
         if (!Regex("^Copyright \\(c\\) [0-9-]+ Johannes Kuhlmann\\s+Permission is hereby granted").containsMatchIn(mit))
             throw GradleException("hotd2-vr: no MIT notice in ${cgltf.get().asFile}")
         val head = listOf(
-            "Lupin the Third VR: licence",
+            "Survivor 2 - Code: Veronica VR: licence",
             "",
-            "Lupin the Third VR (the Quest app, and flycast.exe in the PC version) is built from",
+            "Survivor 2 - Code: Veronica VR (the Quest app, and flycast.exe in the PC version) is built from",
             "Flycast (GPL-2.0-or-later), mikermak's hotd2-vr and Confidential Mission VR's changes to it",
             "(GPL-2.0-or-later too), and the gun model \"Namco Arcade Gun\" by Martoscar (CC BY 4.0,",
             "https://creativecommons.org/licenses/by/4.0/). CC BY 4.0 goes together with GPL-3.0 but not",
@@ -232,15 +232,15 @@ abstract class LicenceText : DefaultTask() {
     }
 }
 
-// hotd2-vr: the vr build type is the app Lupin the Third VR, with an application ID of its own
+// hotd2-vr: the vr build type is the app Survivor 2 - Code: Veronica VR, with an application ID of its own
 // (BaseGLActivity.VR_APPLICATION_ID matches it). ${applicationId} in the manifest follows.
 // Its versionName and versionCode are the standalone app's own, not Flycast's tags.
 androidComponents {
     onVariants(selector().withBuildType("vr")) { variant ->
-        variant.applicationId.set("com.vrlightgunhub.lupin")
+        variant.applicationId.set("com.vrlightgunhub.survivor2")
         variant.outputs.forEach {
             it.versionName.set("$hubVersion-g${gitShortHash()}")
-            it.versionCode.set(2)
+            it.versionCode.set(1)
         }
         val licence = tasks.register<LicenceText>("${variant.name}LicenceText") {
             gpl3.set(file("../../../core/deps/picotcp/LICENSE.GPLv3"))
