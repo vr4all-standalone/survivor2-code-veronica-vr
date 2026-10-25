@@ -28,11 +28,12 @@ namespace {
  float readFloat(uint32_t a){const uint32_t bits=ReadMem32_nommu(a);float f;std::memcpy(&f,&bits,4);return f;}
  void writeFloat(uint32_t a,float f){uint32_t bits;std::memcpy(&bits,&f,4);WriteMem32_nommu(a,bits);}
  bool world(){return game()&&CurrentCartridge&&CurrentCartridge->game&&std::strcmp(CurrentCartridge->game->name,"gunsur2")==0;}
- bool playing(){return ReadMem32_nommu(0x8c19531c)==Context&&playerActive(ReadMem8_nommu(Player+12),ReadMem8_nommu(Player+15),ReadMem8_nommu(Player+13));}
+ bool playing(){return ReadMem32_nommu(0x8c19531c)==Context&&playerActive(ReadMem8_nommu(Player+12),ReadMem8_nommu(Player+15),ReadMem8_nommu(Player+13),ReadMem8_nommu(Player+14));}
  void snapshot(){
   vr::GunState value{};
   value.valid=available&&playing();value.shots=value.fired=shots;
   if(value.valid){const unsigned index=ReadMem8_nommu(Context+0x84);if(index<12){const unsigned slot=ReadMem8_nommu(0x8c1bb3be + index);if(slot<12){value.ammo=std::min<unsigned>(255,ReadMem16_nommu(Player+0x5d4+slot*2));value.magazine=std::min<unsigned>(255,ReadMem16_nommu(0x8c1bb396+index*10));}else value.valid=false;}else value.valid=false;}
+  if(value.valid)value.nativeWeapon=nativeWeaponId(ReadMem32_nommu(Player+0x3e4));
   std::lock_guard<std::mutex> lock(stateMutex);state=value;
  }
  void tick(Event,void*){

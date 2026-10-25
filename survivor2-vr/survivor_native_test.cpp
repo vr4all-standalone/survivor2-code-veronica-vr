@@ -72,5 +72,42 @@ int main(){
  check(!playerActive(1,0,0),"briefing with zero combat submode stays inactive");
  check(!playerActive(1,255,1),"unknown animation stage cannot use combat initialization exception");
  check(!playerActive(1,0,2),"unknown combat submode cannot use initialization exception");
+ // Measured Ingram firing tuple [mode=1,submode=1,motion=0xa9,stage=2].
+ const bool ingramActive=playerActive(1,2,1,0xa9);
+ check(ingramActive,"measured Ingram firing stage remains active");
+ check(hideBody(0x8c3d5ce0,0x8c0268e0,ingramActive,true),"Ingram firing keeps native P1 body hidden");
+ check(hideAttachment(0x40081,0x804ba,9,0x8c3d5ce0,ingramActive,true),"Ingram firing keeps native P1 weapon hidden");
+ check(!playerActive(1,2,1),"stage two without measured motion stays inactive");
+ bool knownMotionOnly=true,knownSubmodeOnly=true;
+ for(unsigned value=0;value<256;++value){
+  if(value!=0xa9&&playerActive(1,2,1,value))knownMotionOnly=false;
+  if(value!=1&&playerActive(1,2,value,0xa9))knownSubmodeOnly=false;
+ }
+ check(knownMotionOnly,"unknown stage-two motions stay inactive");
+ check(knownSubmodeOnly,"stage-two firing exception requires combat submode one");
+ check(!playerActive(0,2,1,0xa9)&&!playerActive(4,2,1,0xa9)&&!playerActive(255,2,1,0xa9),"stage-two firing exception requires combat mode one");
+ check(!playerActive(1,0,0,0xa9)&&!playerActive(0,0,0,0),"menu and briefing remain inactive with firing motion");
+ check(playerActive(1,1,0,0xa9)&&playerActive(1,3,2,0)&&playerActive(4,1,2,0)&&playerActive(4,3,0,0xa9)&&playerActive(1,0,1,0xa9),"all previously accepted stages retain behavior");
+ bool allBodyTargets=true;
+ for(uint32_t target:{0x8c0268e0u,0x8c026962u,0x8c026a08u,0x8c026a8au})allBodyTargets&=hideBody(0x8c3d5ce0,target,ingramActive,true);
+ check(allBodyTargets,"Ingram firing hides all four native P1 body routes");
+ check(hideAttachment(0x40081,0x804ba,13,0x8c3d5ce0,ingramActive,true),"Ingram firing hides native P1 left-hand attachment");
+ check(!hideBody(0x8c3d62d8,0x8c0268e0,ingramActive,true)&&!hideBody(0x8c2e286c,0x8c0268e0,ingramActive,true),"Ingram firing retains P2 and NPC bodies");
+ check(!hideAttachment(0x40081,0x804ba,9,0x8c3d62d8,ingramActive,true)&&!hideAttachment(0x40081,0x804ba,9,0x8c2e286c,ingramActive,true),"Ingram firing retains P2 and NPC attachments");
+ check(!hideBody(0x8c3d5ce0,0x8c0268e0,ingramActive,false)&&!hideAttachment(0x40081,0x804ba,9,0x8c3d5ce0,ingramActive,false),"Ingram firing preserves non-VR body and weapon");
+ check(nativeWeaponId(4)==4,"BR-93R equipped ID accepted");
+ check(nativeWeaponId(6)==6,"Python equipped ID accepted");
+ check(nativeWeaponId(7)==7,"Gold Luger equipped ID accepted");
+ check(nativeWeaponId(8)==8,"Ingram equipped ID accepted");
+ check(nativeWeaponId(11)==11,"SPAS-12 equipped ID accepted");
+ check(nativeWeaponId(12)==12,"AK47S equipped ID accepted");
+ check(nativeWeaponId(14)==14,"M79 equipped ID accepted");
+ check(nativeWeaponId(18)==18,"LN-02 equipped ID accepted");
+ bool unknownWeaponFallback=true;
+ for(uint32_t value=0;value<256;++value){
+  switch(value){case 4:case 6:case 7:case 8:case 11:case 12:case 14:case 18:break;default:if(nativeWeaponId(value)!=0)unknownWeaponFallback=false;}
+ }
+ check(unknownWeaponFallback,"unknown and absent equipped IDs use fallback");
+ check(nativeWeaponId(0x10004)==0&&nativeWeaponId(0xffffffff)==0,"corrupt full-width equipped IDs cannot alias known weapons");
  std::printf("%d/%d checks passed\n",checks-failures,checks);return failures?1:0;
 }

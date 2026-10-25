@@ -115,7 +115,8 @@ void calibrateGunInput(int player, int& x, int& y);
 // reloads), how many of those fired a round (a running count like shots: the ammo went down, or
 // any shot with the rifle held, its last too), and whether the player holds the assault rifle
 // (the weapon field at the profile's rifle value, while the player is in play).
-struct GunState { bool valid; u8 ammo, magazine; u16 shots, fired; bool rifle; };
+// nativeWeapon is the validated Survivor equipped model ID, or zero for fallback/other games.
+struct GunState { bool valid; u8 ammo, magazine; u16 shots, fired; bool rifle; int nativeWeapon=0; };
 // The running profile's gun state, as read at the last VBlank: false when the profile has none;
 // true with out.valid false when it has one but the emulator isn't running or hasn't been read.
 bool gunState(int player, GunState& out);
