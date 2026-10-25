@@ -41,7 +41,9 @@ Physical Quest/PC headset comfort and performance, later stages, every weapon an
 
 ## Build and checks
 
-Windows needs Visual Studio 2022 C++ tools and its bundled CMake/Ninja:
+The PC build requires Windows x64, the Microsoft Visual C++ x64 runtime and an active OpenXR runtime.
+
+Building Windows needs Visual Studio 2022 C++ tools and its bundled CMake/Ninja:
 
 ```bat
 hotd2-vr\build-win.cmd RelWithDebInfo

@@ -32,32 +32,32 @@
 **Files:** new clone, private `build-research`, `survivor2-vr/notes/findings.md`, this spec/plan and private progress ledger.
 **Interfaces:** Produces the observed boot path, verified camera/focal/state metadata and the firing/control adaptation approach consumed by Task 2. No unproven numeric constants enter product code.
 
-- [ ] Verify independent source/dependencies and run baseline native controls tests.
-- [ ] Boot an unmodified generic research player using the user's existing World set, with private config/saves/UDP and owned-process cleanup.
-- [ ] Capture gameplay render passes and main RAM; identify camera projection and HUD, analog movement/turn routing, actions and firing path using controlled changes.
-- [ ] Prove the minimum tracked-aim path independently of ordinary centered camera firing. Record evidence and exact revision checks.
-- [ ] Commit research metadata and scope any remaining technical obstacles honestly.
+- [x] Verify independent source/dependencies and run baseline native controls tests.
+- [x] Boot an unmodified generic research player using the user's existing World set, with private config/saves/UDP and owned-process cleanup.
+- [x] Capture gameplay render passes and main RAM; identify camera projection and HUD, analog movement/turn routing, actions and firing path using controlled changes.
+- [x] Prove the minimum tracked-aim path independently of ordinary centered camera firing. Record evidence and exact revision checks.
+- [x] Commit research metadata and scope any remaining technical obstacles honestly.
 
 ### Task 2: Guarded camera, movement and tracked firing
 
 **Files:** `core/rend/vr_reproject.cpp/.h`, `core/rend/vr/xr_host.cpp/.h`, new focused Survivor adapter/header and native tests, `core/hw/maple/maple_jvs.cpp` only if input routing requires it.
 **Interfaces:** Consumes Task 1's measured data; produces guarded per-frame integration and native input functions with explicit neutral/reset semantics. Define exact signatures alongside the first tests after research resolves the firing path.
 
-- [ ] Write native behavior tests before implementing the adapter: neutral/deadzones/clamping, tracking/focus/menu reset, transition swallowing, revision guard rejection and coordinate conversion at multiple head/controller poses. Run and observe expected failures.
-- [ ] Implement the smallest guarded adapter and profile satisfying those tests; rerun to green.
-- [ ] Run controlled playable simulator routes for movement, aiming, action/weapon change and accepted rounds. Verify camera, controller and hit behavior separately, then together.
-- [ ] Validate HUD/geometry/cutscenes from captured passes; enable only measured capabilities such as wider view.
-- [ ] Commit tested behavior and numeric findings.
+- [x] Write native behavior tests before implementing the adapter: neutral/deadzones/clamping, tracking/focus/menu reset, transition swallowing, revision guard rejection and coordinate conversion at multiple head/controller poses. Run and observe expected failures.
+- [x] Implement the smallest guarded adapter and profile satisfying those tests; rerun to green.
+- [x] Run controlled playable simulator routes for movement, aiming, native gun-button action and accepted rounds; explicitly document unvisited weapon/melee paths. Verify camera, controller and hit behavior separately, then together.
+- [x] Validate HUD/geometry/cutscenes from captured passes; enable only measured capabilities such as wider view.
+- [x] Commit tested behavior and numeric findings.
 
 ### Task 3: Standalone identity, setup and capability-aware menus
 
 **Files:** `core/standalone_game.h`, `CMakeLists.txt`, Android manifest/setup Java/build files, `core/rend/vr/xr_menu.cpp/.h`, `xr_labels.cpp`, `xr_hands.cpp`, Survivor build/test scripts.
-**Interfaces:** Consumes Task 2's capabilities; produces the separate app and controls without unsupported 2P/reload rows.
+**Interfaces:** Consumes Task 2's capabilities; produces the separate app and controls with capability-aware shared 13-row menus.
 
-- [ ] Add failing identity/revision/setup and menu/input-transition tests using existing native and Java harness patterns.
-- [ ] Implement supported World ZIP/BIOS validation, dedicated app identity/data roots, accurate control labels and shared menu behavior adapted to Survivor.
-- [ ] Run native tests and simulator setup/menu/pause/focus/persistence scenarios; inspect actual rendered results.
-- [ ] Commit the standalone integration.
+- [x] Add failing identity/revision/setup and menu/input-transition tests using existing native and Java harness patterns.
+- [x] Implement supported World ZIP/BIOS validation, dedicated app identity/data roots, accurate control labels and shared menu behavior adapted to Survivor.
+- [x] Run native tests and simulator setup/menu/pause/focus/persistence scenarios; inspect actual rendered results.
+- [x] Commit the standalone integration.
 
 ### Task 4: Build, package and review
 
@@ -67,9 +67,15 @@
 - [ ] Build Windows and Android with independent caches. Inspect APK package/version and runtime identity.
 - [ ] Package licensed software assets and launcher; enumerate archive entries to prove game data, private dumps and signing secrets are absent.
 - [ ] Run final meaningful native/shared regressions and simulator gameplay/menu checks. Record source commits, checks and output hashes.
-- [ ] Request one fresh whole-branch review; resolve material findings with regression tests, then rerun affected verification.
+- [x] Request one fresh whole-branch review; resolve material findings with regression tests, then rerun affected verification.
 - [ ] Deliver local artifact links and explicit limits. Do not upload or install.
 
 ## Execution decisions
 
 The user approved the full Naomi design and build on 2026-10-25. Execute inline without another design/plan approval. Research-dependent addresses and interfaces are deliberately resolved by measured Task 1 evidence; if genuine decoupled aiming cannot be established, retain an accurately labelled research milestone and report the obstacle rather than claim a finished port.
+
+Final review corrections: inactive zero samples no longer rearm untracked controls; current
+head orientation validity gates live input. Both issues have observed RED/GREEN regressions.
+Native tests now53; shared132, input23, standalone6, Java31, PC10, package42 pass. Final
+local binary/provenance checks are recorded in dist/build-verification.json after packaging.
+Retain the isolated branch and keep artifacts unreleased under the user's existing steering.

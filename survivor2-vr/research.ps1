@@ -34,6 +34,7 @@
                                   back to 0 after that long
               stick <hand> <x> <y> [ms]       the thumbstick (-1..1), back to the middle after ms
               pose <head|left|right> <x> <y> <z> <yaw> <pitch> [roll]   where it is and faces
+              xrtrack head <0|1>              head orientation invalid/valid, controllers stay tracked
               xrstate <focused|visible>       visible: focus lost (a system menu over the app)
             From the first gun action on, every player used gets "LG p x y buttons" every 50 ms;
             from the first simulator action on, the simulator gets its "XR <path> <value>",
@@ -123,12 +124,12 @@ $forms = @{
 	capture = '^capture [\w.-]+$'; ray = '^ray -?\d+ -?\d+$'; state = '^state (load|save) [0-9]$'; trace = '^trace \d+$'; cabinet = '^cabinet -?\d+ -?\d+ -?\d+ \d+$'; rip = '^rip \d+ \d+ \d+( [0-9a-f]+( \d+)?)?$'; mark = '^mark .'
 	xr = '^xr (left|right)/(a|b|x|y|menu|thumbstick|trigger|squeeze|\w+(/\w+)+) -?\d+(\.\d+)?( \d+(\.\d+)?)?$'
 	stick = '^stick (left|right) -?\d+(\.\d+)? -?\d+(\.\d+)?( \d+(\.\d+)?)?$'
-	pose = '^pose (head|left|right)( -?\d+(\.\d+)?){5,6}$'; xrstate = '^xrstate (focused|visible)$'
+	pose = '^pose (head|left|right)( -?\d+(\.\d+)?){5,6}$'; xrstate = '^xrstate (focused|visible)$'; xrtrack = '^xrtrack head [01]$'
 	poke = '^poke [0-9a-fA-F]{1,8} [124] [0-9a-fA-F]{1,8}$'; mute = '^mute \d+(\.\d+)?$'
 }
 $actionList = 'start [p], aim p x y, fire p x y, reload [p], button p bits ms, shot [label], rip count interval ram [texhex polys], mark <text>, poke addr size value, mute s, xr <hand>/<input> <value> [ms], stick <hand> <x> <y> [ms], pose <head|left|right> x y z yaw pitch [roll], xrstate <focused|visible>'
 function Test-ActionForm([string]$text) { $verb = ($text -split ' ')[0]; return $forms.ContainsKey($verb) -and $text -match $forms[$verb] }
-$simActions = 'xr', 'stick', 'pose', 'xrstate'
+$simActions = 'xr', 'stick', 'pose', 'xrstate', 'xrtrack'
 $events = @()
 foreach ($a in $At) {
 	$time, $action = $a -split '=', 2
@@ -279,6 +280,7 @@ function Invoke-Action($ev, [double]$now) {
 			}
 		}
 		'pose' { Set-XrLine "pose $($w[1])" ('XRPOSE ' + ($w[1..($w.Count - 1)] -join ' ')) $null $null $now }
+		'xrtrack' { Set-XrLine 'tracking' "XRTRACK head $($w[2])" $null $null $now }
 		'xrstate' { Set-XrLine 'state' "XRSTATE $($w[1])" $null $null $now }
 	}
 }

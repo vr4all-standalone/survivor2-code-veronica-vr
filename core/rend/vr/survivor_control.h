@@ -13,12 +13,12 @@ public:
   const bool live=s.focused&&!s.menu;
   const bool movement=live&&s.motionTracked;
   if(!movement)motionBlocked=true;
-  if(std::isfinite(s.x)&&std::isfinite(s.y)&&std::abs(s.x)<.15f&&std::abs(s.y)<.15f)motionBlocked=false;
+  if(movement&&std::isfinite(s.x)&&std::isfinite(s.y)&&std::abs(s.x)<.15f&&std::abs(s.y)<.15f)motionBlocked=false;
   if(movement&&!motionBlocked){out.input.roll=normalize(s.x);out.input.pitch=normalize(-s.y);if(s.y>.65f)out.input.buttons|=Up;else if(s.y<-.65f)out.input.buttons|=Down;}
   const bool aim=live&&s.aimTracked;out.aim=aim;
   if(!aim){triggerBlocked=actionBlocked=enterBlocked=true;triggerHeld=false;}
-  if(std::isfinite(s.pull)&&s.pull<.35f){triggerBlocked=false;triggerHeld=false;}
-  if(!s.action)actionBlocked=false;if(!s.enter)enterBlocked=false;
+  if(aim&&std::isfinite(s.pull)&&s.pull<.35f){triggerBlocked=false;triggerHeld=false;}
+  if(aim&&!s.action)actionBlocked=false;if(aim&&!s.enter)enterBlocked=false;
   if(aim){
    triggerHeld=std::isfinite(s.pull)&&s.pull>(triggerHeld?.35f:.6f);
    if(triggerHeld&&!triggerBlocked)out.input.buttons|=Trigger;

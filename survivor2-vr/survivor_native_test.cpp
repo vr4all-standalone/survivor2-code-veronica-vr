@@ -58,5 +58,15 @@ int main(){
  check(!hideAttachment(0x40081,0x704ba,0,0x8c3d5ce0,true,true),"retain unattached projectile");
  check(!hideAttachment(0x40001,0x704ba,9,0x8c3d5ce0,true,true)&&!hideAttachment(0x40081,0x70000,9,0x8c3d5ce0,true,true),"reject unknown component type");
  check(!hideAttachment(0x40081,0x704ba,9,0x8c3d5ce0,false,true)&&!hideAttachment(0x40081,0x704ba,9,0x8c3d5ce0,true,false),"retain attachment outside active VR play");
+ ControlGate reconnect;ControlSample trackedSample;trackedSample.focused=trackedSample.aimTracked=trackedSample.motionTracked=true;
+ reconnect.update(trackedSample);trackedSample.x=1;check(reconnect.update(trackedSample).input.roll!=0,"tracked stick moves before loss");
+ trackedSample.motionTracked=false;trackedSample.x=0;check(reconnect.update(trackedSample).input.roll==0,"inactive stick sample while untracked is neutral output");
+ trackedSample.motionTracked=true;trackedSample.x=1;check(reconnect.update(trackedSample).input.roll==0,"inactive neutral cannot rearm held movement after tracking recovery");
+ trackedSample.x=0;reconnect.update(trackedSample);trackedSample.x=1;check(reconnect.update(trackedSample).input.roll!=0,"tracked release rearms recovered movement");
+ reconnect.reset();trackedSample.x=0;trackedSample.aimTracked=false;trackedSample.pull=0;trackedSample.action=trackedSample.enter=false;reconnect.update(trackedSample);
+ trackedSample.aimTracked=true;trackedSample.pull=1;trackedSample.action=trackedSample.enter=true;
+ check(reconnect.update(trackedSample).input.buttons==0,"inactive gun buttons cannot rearm held controls after recovery");
+ trackedSample.pull=0;trackedSample.action=trackedSample.enter=false;reconnect.update(trackedSample);trackedSample.pull=1;trackedSample.action=true;
+ check((reconnect.update(trackedSample).input.buttons&(Trigger|Action))==(Trigger|Action),"tracked button releases rearm after recovery");
  std::printf("%d/%d checks passed\n",checks-failures,checks);return failures?1:0;
 }

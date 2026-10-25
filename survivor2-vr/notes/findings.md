@@ -96,7 +96,7 @@ completion evidence. Do not describe the whole game as finished on the strength 
 
 ## Current build/tests
 
-Windows MSVC/OpenXR builds pass. Native math/control suite has 47 checks (RED/GREEN
+Windows MSVC/OpenXR builds pass. Native math/control suite has 53 checks (RED/GREEN
 observed), input suite 23. Standalone setup has 31 synthetic ZIP/JVM tests; no game data
 in fixtures. Quest arm64 build succeeds after an Android lexer issue was corrected.
 APK inspected as com.vrlightgunhub.survivor2, code 1, 1.0.0-g<source>, Survivor launcher.
@@ -120,3 +120,9 @@ neutralization share the same reset path. These are measured integration results
 The native GUN BUTTON is routed as action (B/Y). Presses are observed in cabinet logs;
 the sampled route did not establish an inventory cycle or knife attack, so those remain
 coverage limits. No claim of every-weapon runtime validation is made.
+
+Review tracking regressions: inactive controller zero samples cannot release held-input
+latches. Current head orientation validity (not only retained originSet) gates Survivor
+input. The PC simulator can independently invalidate the head with XRTRACK head 0/1;
+xr-head-loss-red reproduced a trigger with an invalid head; the green run suppresses
+input through recovery until the fresh press. See validation.md for timestamps/counts.

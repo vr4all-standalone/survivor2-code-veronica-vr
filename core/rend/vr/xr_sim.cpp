@@ -100,6 +100,7 @@ Pose livePoses[3] {
 	makePose(-0.18f, 1.3f, -0.35f, 0.f, 0.f, 0.f),
 	makePose(0.18f, 1.3f, -0.35f, 0.f, 0.f, 0.f),
 };
+std::atomic<bool> wantHeadTracked { true }; // XRTRACK head 0/1, independent of controller tracking
 std::atomic<bool> wantFocus { true };		// XRSTATE focused / visible
 
 Pose livePose(int who)
@@ -725,8 +726,8 @@ SIM_FN(LocateViews)(XrSession session, const XrViewLocateInfo *info, XrViewState
 		return XR_ERROR_HANDLE_INVALID;
 	const Pose head = livePose(Head);
 	const Pose from = worldPose(*base);
-	viewState->viewStateFlags = XR_VIEW_STATE_ORIENTATION_VALID_BIT | XR_VIEW_STATE_POSITION_VALID_BIT
-			| XR_VIEW_STATE_ORIENTATION_TRACKED_BIT | XR_VIEW_STATE_POSITION_TRACKED_BIT;
+	viewState->viewStateFlags = wantHeadTracked ? XR_VIEW_STATE_ORIENTATION_VALID_BIT | XR_VIEW_STATE_POSITION_VALID_BIT
+			| XR_VIEW_STATE_ORIENTATION_TRACKED_BIT | XR_VIEW_STATE_POSITION_TRACKED_BIT : 0;
 	return fill(capacity, count, views, 2, [&](XrView& v, uint32_t i) {
 		Pose eye;
 		eye.position.x = i == 0 ? -HalfIpd : HalfIpd;
@@ -1310,6 +1311,13 @@ void udpLine(const char *line)
 			}
 			return;
 		}
+	}
+	if (words.size() == 3 && words[0] == "XRTRACK" && words[1] == "head" && (words[2] == "0" || words[2] == "1"))
+	{
+		const bool tracked = words[2] == "1";
+		if (wantHeadTracked.exchange(tracked) != tracked)
+			NOTICE_LOG(INPUT, "XRSIM: head tracking %s", tracked ? "valid" : "invalid");
+		return;
 	}
 	if (words.size() == 2 && words[0] == "XRSTATE" && (words[1] == "focused" || words[1] == "visible"))
 	{

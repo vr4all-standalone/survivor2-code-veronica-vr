@@ -2055,7 +2055,7 @@ void playerStartButtons(bool leftStart, bool rightStart, bool& p1Start, bool& p2
 	p2Start = players[1];
 }
 
-void updateLightgun(XrTime time)
+void updateLightgun(XrTime time, bool headTracked)
 {
 	for (Gun& g : guns)
 		g.visible = false;
@@ -2249,7 +2249,7 @@ void updateLightgun(XrTime time)
 		{ const bool fallback = !tracked[nativeGun.hand]; nativeGun.hand = other; if (fallback) gate.reset(); }
 		const glm::vec2 move = stickAction2(Left), turning = stickAction2(Right);
 		vr::survivor::ControlSample sample;
-		sample.focused = focused && originSet && vr::survivor::ready();
+		sample.focused = focused && originSet && headTracked && vr::survivor::ready();
 		sample.menu = menuOpen; sample.aimTracked = tracked[nativeGun.hand]; sample.motionTracked = tracked[Left] && tracked[Right];
 		sample.x = move.x; sample.y = move.y; sample.turn = turning.x;
 		sample.pull = pulls[nativeGun.hand]; sample.action = skip && !skipSwallow; sample.enter = rightStart || leftStart;
@@ -3151,7 +3151,7 @@ bool frame()
 				views[1].fov.angleLeft * deg, views[1].fov.angleRight * deg, views[1].fov.angleUp * deg, views[1].fov.angleDown * deg,
 				chains[0].width, chains[0].height, worldScale(), (float)config::ExtraDepthScale);
 	}
-	updateLightgun(frameState.predictedDisplayTime);
+	updateLightgun(frameState.predictedDisplayTime, located);
 	retryControllerModels();
 	updateControllers(frameState.predictedDisplayTime);
 	noteDrawn();

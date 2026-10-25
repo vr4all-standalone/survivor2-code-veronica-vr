@@ -2399,7 +2399,11 @@ void dropShotMarker(rend_context& ctx, const RenderPass& pass, const RenderPass&
 	if (!config::VrReproject || ctx.isRTT || settings.platform.isNaomi2())
 		return;
 	const bool onPC = !xr::enabled();
-	if (onPC || (survivor::game() && config::VrXrSim))
+	bool capture = onPC;
+#ifndef __ANDROID__
+	capture = capture || (survivor::game() && config::VrXrSim);
+#endif
+	if (capture)
 		ripRequested(ctx, pass, previousPass);
 #ifndef __ANDROID__
 	watchTextures(ctx, pass, previousPass);

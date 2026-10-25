@@ -8,7 +8,7 @@ The physical headset checklist remains open; compilation and simulator runs do n
 | Check | Observed result |
 | --- | --- |
 | Cabinet mailbox / signed axes / stale input | 23 passed |
-| Native camera rays / revision guards / transitions / actor visual ownership | 47 passed |
+| Native camera rays / revision guards / transitions / actor visual ownership | 53 passed |
 | Standalone loaded title + cartridge set | 6 passed |
 | Shared production settings / input pulses / held state | 132 passed |
 | Android cartridge / BIOS metadata / setup status (JUnit) | 31 passed |
@@ -70,3 +70,23 @@ public Android debug signer and must remain test builds.
 
 The default weapon route and native collision math are measured. Unvisited game paths are
 coverage limits, not a claim that each weapon and scene has been tested.
+
+## Final independent source review
+
+One fresh whole-branch reviewer inspected the implementation and independently compiled
+the input/native/standalone checks. Two material tracking findings were reproduced and fixed:
+
+1. Inactive zero samples during controller tracking loss could rearm held movement/buttons.
+   The new tests first failed (51/53), then passed (53/53). Only a live tracked release rearms.
+2. A previously acquired origin survived invalid current head orientation. The simulator now
+   supports `XRTRACK head 0/1`, independently of controller poses. `xr-head-loss-red` emitted
+   a cabinet trigger at 8.025 s while the head was invalid (6–10 s). After passing current
+   `xrLocateViews` orientation validity to the input gate, `xr-head-loss-green` remains neutral
+   through loss and held recovery; the next trigger is the fresh 17.008 s press.
+
+Position-only fallback is preserved when orientation is still valid. Native play/briefing/death
+phase changes also advance the held-control generation at VBlank; transient hurt/grab modes
+stay within the same active phase. The final normal-boot route checks this path again.
+
+The review found no other material issue in the native HLE semantics, camera/ray math,
+visual ownership, setup or packaging source. Physical and unvisited-game coverage remains open.

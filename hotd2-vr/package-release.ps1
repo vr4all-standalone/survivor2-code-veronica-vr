@@ -61,7 +61,7 @@ $playCmd = 'Play Survivor 2.cmd'
 # or disc images inside it (a ROM set, a BIOS zip). Signing material stays private too.
 $bannedNames = '*.chd', '*.gdi', '*.cue', '*.cdi', '*.pic', 'shot_*.png', 'hands*.bin', 'staff*.bin', 'HND1*.bin',
 	'gun-*.bin', '*.zip', '*.7z', '*.rar', '*.iso', '*.jks', '*.keystore', 'release-signing.properties'
-$bannedNames += '*.bin', '*.rom', '*.state', '*.nvmem*', '*.eeprom'
+$bannedNames += 'ram*.bin', 'vram*.bin', 'pass*.bin', 'pal*.bin', 'bhf2vere.2f', '*.ic[0-9]*', '*.rom', '*.state', '*.nvmem*', '*.eeprom'
 $bannedDirs = 'rip', '.vrlightgunhub', 'build-research'
 
 # The entries of a zip or APK whose names are on the lists above.
@@ -433,7 +433,8 @@ This build inherits Flycast and mikermak's hotd2-vr, plus the CM/Lupin VR interf
      roms\gunsur2.zip       all 15 World BHF2 Ver. E ROMs
      roms\naomi.zip         supported NAOMI BIOS, or its BIOS inside gunsur2.zip
    No CHD or PIC is required. Japanese sets are not supported. Do not rename a clone.
-2. Connect the headset to your active OpenXR runtime (SteamVR, Quest Link, etc.).
+2. Use Windows x64 with the Microsoft Visual C++ x64 runtime installed.
+   Connect the headset to your active OpenXR runtime (SteamVR, Quest Link, etc.).
 3. Double-click "Play Survivor 2.cmd". It checks the archive length/CRC metadata and
    starts flycast.exe with roms\gunsur2.zip and this folder as the working directory.
    This readiness check does not certify the compressed payload; native boot must succeed.

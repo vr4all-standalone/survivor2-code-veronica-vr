@@ -22,7 +22,7 @@ namespace {
  Aim aim;
  vr::GunState state{};
  uint16_t shots=0;
- bool logged=false;
+ bool logged=false,activePhase=false;
  constexpr uint32_t Player=0x8c3d5ce0,Context=0x8c2b4c9c;
  bool signature(){return nativeSignature([](uint32_t offset){return ReadMem16_nommu(0x8c000000+offset);});}
  float readFloat(uint32_t a){const uint32_t bits=ReadMem32_nommu(a);float f;std::memcpy(&f,&bits,4);return f;}
@@ -40,6 +40,8 @@ namespace {
   if(!valid){turn=0;return;}
   for(uint32_t entry:{RayEntry,AmmoEntry,CameraEntry,DrawCalls[0],DrawCalls[1],DrawCalls[2],DrawCalls[3]})if(ReadMem16_nommu(0x8c000000+entry)!=TrapOpcode)WriteMem16_nommu(0x8c000000+entry,TrapOpcode);
   if(!logged){NOTICE_LOG(RENDERER,"VR: Survivor 2 World native ray and shot hooks ready");logged=true;}
+  const bool active=playing();
+  if(active!=activePhase){activePhase=active;neutral();NOTICE_LOG(INPUT,"VR: Survivor gameplay phase %s",active?"active":"inactive");}
   const int step=turn.exchange(0);
   if(step&&playing()){
    // Positive native yaw turns left. Thirty degrees, once per stick deflection.
@@ -49,7 +51,7 @@ namespace {
   }
   snapshot();
  }
- void reset(Event,void*){neutral();available=false;logged=false;shots=0;++serial;std::lock_guard<std::mutex> lock(stateMutex);state={};}
+ void reset(Event,void*){neutral();available=false;logged=false;activePhase=false;shots=0;++serial;std::lock_guard<std::mutex> lock(stateMutex);state={};}
  struct Registration{Registration(){EventManager::listen(Event::VBlank,tick);for(Event e:{Event::Start,Event::LoadState,Event::Terminate})EventManager::listen(e,reset);EventManager::listen(Event::Pause,[](Event,void*){neutral();++serial;});}} registration;
 }
 bool game(){return settings.content.gameId==" BIOHAZARD  GUN SURVIVOR2";}
