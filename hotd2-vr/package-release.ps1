@@ -52,7 +52,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 # src\vr\AndroidManifest.xml), its library entry, and the PC zip's start script (hotd2-vr\assets).
 $appId = 'com.vrlightgunhub.survivor2'
 $appLabel = 'Survivor 2 - Code: Veronica VR'
-$appVersion = '1.0.0'
+$appVersion = '1.0.0-preview.3'
 $appLauncher = 'com.flycast.emulator.Survivor2StartActivity'
 $playCmd = 'Play Survivor 2.cmd'
 
@@ -223,7 +223,7 @@ function Find-AppIdentityFault([string[]]$badgingLines, [string[]]$manifestTree,
     $badging = $badgingLines | Where-Object { $_ -match '^package:' } | Select-Object -First 1
     $wantVersion = [regex]::Escape("$appVersion-g") + $(if ($testBuild) { '[0-9a-f]+' } else { [regex]::Escape($shortHash) })
     if ($badging -notmatch "^package: name='$([regex]::Escape($appId))'") { "the package is not $appId" }
-    if ($badging -notmatch "versionCode='2'") { 'the versionCode is not 2' }
+    if ($badging -notmatch "versionCode='3'") { 'the versionCode is not 3' }
     if ($badging -notmatch "versionName='$wantVersion'") {
         "the versionName is not $appVersion-g$(if ($testBuild) { '<commit>' } else { $shortHash })"
     }

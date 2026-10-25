@@ -43,7 +43,7 @@ function Archive([string]$name, [hashtable]$entries) {
 try {
     Check 'Survivor application ID' ($appId -eq 'com.vrlightgunhub.survivor2')
     Check 'Survivor label' ($appLabel -eq 'Survivor 2 - Code: Veronica VR')
-    Check 'Survivor release base version' ($appVersion -eq '1.0.0')
+    Check 'Survivor release base version' ($appVersion -eq '1.0.0-preview.3')
     Check 'Survivor setup launcher' ($appLauncher -eq 'com.flycast.emulator.Survivor2StartActivity')
     Check 'Survivor PC launcher name' ($playCmd -eq 'Play Survivor 2.cmd')
     $banned = @('roms/LUPINSHOO.ZIP','roms/lupinshoo/gds-0018.chd','gds-0018.cue','gds-0018.gdi',
@@ -79,16 +79,16 @@ try {
         '  E: application', '    E: activity', '      A: android:name(0x01010003)="com.flycast.emulator.Survivor2StartActivity"',
         '      E: intent-filter', '        E: category', '          A: android:name(0x01010003)="android.intent.category.LAUNCHER"')
     Check 'manifest launcher parser uses activity owner' (@(Get-LauncherOwners $tree) -join ',' -eq 'com.flycast.emulator.Survivor2StartActivity')
-    $badging = @("package: name='com.vrlightgunhub.survivor2' versionCode='2' versionName='1.0.0-gabc123'", "application-label:'Survivor 2 - Code: Veronica VR'")
+    $badging = @("package: name='com.vrlightgunhub.survivor2' versionCode='3' versionName='1.0.0-preview.3-gabc123'", "application-label:'Survivor 2 - Code: Veronica VR'")
     $hasIdentityCheck = [bool](Get-Command Find-AppIdentityFault -ErrorAction SilentlyContinue)
     Check 'APK metadata validator is independently testable' $hasIdentityCheck
     if ($hasIdentityCheck) {
         Check 'valid Survivor APK metadata accepted' (@(Find-AppIdentityFault $badging $tree 'abc123' $false).Count -eq 0)
         foreach ($case in @(
             @('package', 'com.vrlightgunhub.survivor2', 'com.vrlightgunhub.confmiss'),
-            @('version code', "versionCode='2'", "versionCode='9'"),
-            @('base version', '1.0.0-gabc123', '1.2.0-gabc123'),
-            @('commit version', '1.0.0-gabc123', '1.0.0-gdef456'),
+            @('version code', "versionCode='3'", "versionCode='9'"),
+            @('base version', '1.0.0-preview.3-gabc123', '1.2.0-gabc123'),
+            @('commit version', '1.0.0-preview.3-gabc123', '1.0.0-preview.3-gdef456'),
             @('label', 'Survivor 2 - Code: Veronica VR', 'Confidential Mission VR'))) {
             $changed = @($badging | ForEach-Object { $_.Replace($case[1],$case[2]) })
             Check "wrong APK $($case[0]) rejected" (@(Find-AppIdentityFault $changed $tree 'abc123' $false).Count -gt 0)
