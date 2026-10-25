@@ -13,6 +13,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         transform_matrix.cpp
         transform_matrix.h
         vr/survivor_native.cpp
+        vr/survivor_model.cpp
+        vr/survivor_model.h
         vr_reproject.cpp
         vr_reproject.h
         vr/debug_shots.cpp
