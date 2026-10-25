@@ -4,9 +4,10 @@ Native weapon update for **Resident Evil Survivor 2 - Code: Veronica**, NAOMI Wo
 
 ## Changes
 
-- Prepare eight complete native weapon models locally from your own cartridge: BR-93R, Python, Gold Luger, Ingram, SPAS-12, AK47S, M79 and LN-02. Native character hands are omitted from the tracked models.
+- Prepare eight complete native weapon models locally from your own cartridge: BR-93R, Python, Gold Luger, Ingram, SPAS-12, AK47S, M79 and LN-02 (linear launcher). Native character hands are omitted from the tracked models.
 - Automatically match the tracked model to the weapon equipped by the game. Pickups, weapon swaps, ammo and reload remain native. Explicit custom GLB choices still override model presentation.
 - Keep the Ingram firing animation in the active VR phase, preventing the original arms from briefly reappearing and held fire from being interrupted.
+- Align M79 and LN-02 projectiles with the tracked muzzle while preserving native spread, launch speed and ongoing physics. Hitscan weapons retain their native collision metadata.
 - Preparation can be skipped with B or Y; the licensed fallback remains available. Missing or corrupt caches are rebuilt on a new session.
 
 ## Setup

@@ -109,4 +109,19 @@ The Ingram regression was reproduced with the native state [mode1, submode1, mot
 
 Preparation/selection tests cover all-eight completeness, actual presentation signals before work, skip/failure session latches, native/custom selection boundaries and actual atomic replacement behavior. Inherited model builder checks pass16/16. Focused decoder and preparation/render integration reviews found no actionable defects. Release packaging regressions were updated to Android versionCode2 and the preview2 portable README:42/42pass.
 
-Further aiming and runtime integration evidence for this update is recorded below after completion. Raw ROM sections, RAM/VRAM, models, screenshots and instrumented research binaries remain private under ignored research directories.
+Further aiming and runtime integration evidence follows. Raw ROM sections, RAM/VRAM, models, screenshots and instrumented research binaries remain private under ignored research directories.
+
+
+### Final native aiming and bank integration
+
+All eight native equipped IDs were fired through the native equip handshake in private tests. Authoritative routes were observed for BR-93R/Python/SPAS-12 (ray caller03a5a4), Gold Luger/Ingram (04245a), AK47S (03af38), M79 (five projectile-creation completion callers) and LN-02 (039a7c). Claire-specific gun IDs were exercised through the loaded Steve actor; this does not establish a full Claire route.
+
+The projectile hook acts once on a freshly allocated, validated P1 entity, preserving the original function epilogue and shared descriptors. Native metadata and every entity word outside the intended position/orientation/velocity fields were unchanged. M79 velocity lengths and pairwise fan separation matched within8.9e-7; subsequent snapshots showed native gravity continuing. LN-02 initial speed and orientation matched, but the entity expired before the later asynchronous capture. Cosmetic hitscan tracers remain native.
+
+Six controlled stale/non-VR/P2 probes left112-byte shot records unchanged. The final native suite passes110/110, with23inputchecks, model/prep suites and6appchecks also passing. A clean Windows build passed. Final dynarec smoke produced M79 one accepted round/five tracked projectiles, LN-02 one/one, and Ingram72accepted rounds/72tracked rays with no inactive transition. Focused and whole-branch reviews found no actionable defect.
+
+Fresh-cache simulator run `weapons-runtime-prepare` prepared all eight complete caches from the loaded owned cartridge. `weapons-runtime-render` used valid caches without extraction; after a fresh trigger took the tracked gun, all eight models were captured and visually inspected without native hands. Unknown equipped IDs used the licensed fallback. These model-routing pokes were separate from the actual native equip/fire tests above.
+
+`weapons-runtime-custom` retained the Zapper override while native ID8 was equipped. `weapons-runtime-repair` rejected a deliberately corrupt Ingram cache and rebuilt only that entry. `weapons-runtime-skip` skipped preparation, kept fallback through focus loss/return and did not retry during that session. Caches and licensed research model files remain in ignored private app data.
+
+For an external inventory cross-check, see the [arcade-version play guide](https://gamefaqs.gamespot.com/ps2/540785-resident-evil-survivor-2-code-veronica/faqs/13888) and [Namco operator manual](https://arcarc.xmission.com/PDF_Arcade_Manuals_and_Schematics/Gun%20Survivor%202.pdf). The implementation inventory and source fingerprints come from the owned World cartridge.
