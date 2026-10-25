@@ -96,7 +96,7 @@ completion evidence. Do not describe the whole game as finished on the strength 
 
 ## Current build/tests
 
-Windows MSVC/OpenXR builds pass. Native math/control suite has 53 checks (RED/GREEN
+Windows MSVC/OpenXR builds pass. Native math/control suite has 57 checks (RED/GREEN
 observed), input suite 23. Standalone setup has 31 synthetic ZIP/JVM tests; no game data
 in fixtures. Quest arm64 build succeeds after an Android lexer issue was corrected.
 APK inspected as com.vrlightgunhub.survivor2, code 1, 1.0.0-g<source>, Survivor launcher.
@@ -126,3 +126,9 @@ latches. Current head orientation validity (not only retained originSet) gates S
 input. The PC simulator can independently invalidate the head with XRTRACK head 0/1;
 xr-head-loss-red reproduced a trigger with an invalid head; the green run suppresses
 input through recovery until the fresh press. See validation.md for timestamps/counts.
+
+Firing/idle initialization evidence: raw P1 word 01410101 -> 00450101 -> 01a90101,
+then 00410101 -> 01410101. These are mode1/submode1/stage0 for a single frame, whereas
+briefing has submode0. Accept the exact measured combat initializer so the body camera,
+visual suppression and phase generation remain stable. Unknown stage/submode values
+still fail closed. xr-phase-green covers actual firing after the new57-check native suite.

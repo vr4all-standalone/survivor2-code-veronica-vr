@@ -8,7 +8,7 @@ The physical headset checklist remains open; compilation and simulator runs do n
 | Check | Observed result |
 | --- | --- |
 | Cabinet mailbox / signed axes / stale input | 23 passed |
-| Native camera rays / revision guards / transitions / actor visual ownership | 53 passed |
+| Native camera rays / revision guards / transitions / actor visual ownership | 57 passed |
 | Standalone loaded title + cartridge set | 6 passed |
 | Shared production settings / input pulses / held state | 132 passed |
 | Android cartridge / BIOS metadata / setup status (JUnit) | 31 passed |
@@ -90,3 +90,10 @@ stay within the same active phase. The final normal-boot route checks this path 
 
 The review found no other material issue in the native HLE semantics, camera/ray math,
 visual ownership, setup or packaging source. Physical and unvisited-game coverage remains open.
+
+Final smoke exposed an activity-classification edge case before delivery. Native firing
+initialization is [1,1,45hex,0], followed by [1,1,a9hex,1]; idle initialization briefly
+uses [1,1,41hex,0]. Stage zero alone cannot distinguish these from briefing [1,0,0,0].
+The predicate now includes the measured mode1/submode1/stage0 case, with briefing and
+unknown stage/submode rejection tests. All57 native checks pass. The short xr-phase-green
+route fires twice without a false inactive transition; the correction was independently reviewed.

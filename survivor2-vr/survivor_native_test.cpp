@@ -68,5 +68,9 @@ int main(){
  check(reconnect.update(trackedSample).input.buttons==0,"inactive gun buttons cannot rearm held controls after recovery");
  trackedSample.pull=0;trackedSample.action=trackedSample.enter=false;reconnect.update(trackedSample);trackedSample.pull=1;trackedSample.action=true;
  check((reconnect.update(trackedSample).input.buttons&(Trigger|Action))==(Trigger|Action),"tracked button releases rearm after recovery");
+ check(playerActive(1,0,1),"native firing/idle initialization stays active when combat submode is one");
+ check(!playerActive(1,0,0),"briefing with zero combat submode stays inactive");
+ check(!playerActive(1,255,1),"unknown animation stage cannot use combat initialization exception");
+ check(!playerActive(1,0,2),"unknown combat submode cannot use initialization exception");
  std::printf("%d/%d checks passed\n",checks-failures,checks);return failures?1:0;
 }

@@ -17,7 +17,11 @@ inline constexpr Guard NativeGuards[]={{0x0266ea,0x430b},{0x0266ec,0x64e3},{0x02
  {0x23749c,0xe00c},{0x23749e,0xd504},{0x2374a0,0xf348},{0x2374a2,0xf53a},
  {0x042454,0xd411},{0x042456,0x430b},{0x042458,0x0009},{0x0424bc,0xe902},{0x0424be,0x8c11}};
 template<class Read> bool nativeSignature(Read read){for(const auto& g:NativeGuards){const auto w=read(g.offset);if(w!=g.word&& !((g.offset==RayEntry||g.offset==AmmoEntry||g.offset==CameraEntry||drawCall(g.offset))&&w==TrapOpcode))return false;}return true;}
-inline bool playerActive(uint8_t mode,uint8_t active){return (mode==1||mode==4)&&(active==1||active==3);}
+// Stage zero is also a one-frame firing/idle initializer in combat submode one.
+// Briefing is [1,0,0,0]; accepting every stage-zero actor would include it.
+inline bool playerActive(uint8_t mode,uint8_t active,uint8_t submode=0){
+ return ((mode==1||mode==4)&&(active==1||active==3))||(mode==1&&submode==1&&active==0);
+}
 inline bool hideBody(uint32_t actor,uint32_t target,bool active,bool vr){
  return actor==0x8c3d5ce0&&active&&vr&&(target==0x8c0268e0||target==0x8c026962||target==0x8c026a08||target==0x8c026a8a);
 }
