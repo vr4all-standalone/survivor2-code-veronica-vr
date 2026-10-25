@@ -1,11 +1,31 @@
-# Survivor 2 VR
+<div align="center">
 
-![Survivor 2 - Code: Veronica VR](docs/images/banner.svg)
+<img src="hotd2-vr/assets/readme-banner.jpg" alt="Survivor 2 - Code: Veronica VR — experimental Quest and PC VR port" width="100%" />
+
+# Survivor 2 - Code: Veronica VR
+### SEGA NAOMI Survival Action · Standalone Meta Quest & PC VR
+
+[![Release v1.0.0-preview.1](https://img.shields.io/badge/Release-v1.0.0--preview.1_Experimental-d34e5a?style=for-the-badge)](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.0-preview.1)
+[![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
+[![Original game required](https://img.shields.io/badge/Your_Game-gunsur2_World_BHF2_Ver._E-orange?style=for-the-badge)](#bring-your-own-game)
+
+**[⬇️ Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.1/survivor2-code-veronica-vr-quest.apk)** · **[🖥️ PC VR ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.1/survivor2-code-veronica-vr-pcvr.zip)** · **[🎮 Controls](#controls)**
+
+[Checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.1/SHA256SUMS.txt) · [All releases](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases)
+
+**[🌐 VR4ALL — Standalone VR Mod Installer](https://github.com/vr4all-standalone/vr4all-standalone-vr-mod-installer)**
+
+</div>
+
+---
+
+## Overview
 
 Standalone Quest and PC OpenXR adaptation of **Resident Evil Survivor 2 – Code: Veronica**, NAOMI World BHF2 Ver. E (`gunsur2`). **Experimental preview** for one player per app instance. Physical headset validation is pending.
 
 The port uses stereoscopic head tracking, a level first-person body camera, tracked controller aiming, native analog movement and 30° snap turns. It reuses the Confidential Mission/Lupin VR menus, setup and licensed gun/controller assets. One player per app instance is supported initially.
 
+<a id="installation"></a>
 ## Downloads — v1.0.0-preview.1
 
 | Platform | Download |
@@ -27,6 +47,7 @@ Quest setup finds the files under accessible Download folders and explains missi
 
 No game, BIOS, extracted game model, raw memory capture or signing key belongs in a software package.
 
+<a id="controls"></a>
 ## Controls and shared menu
 
 | Control | Action |
