@@ -1,6 +1,6 @@
 # Survivor 2 VR validation
 
-Target: NAOMI World BHF2 Ver. E (`gunsur2`). Development build, unreleased.
+Target: NAOMI World BHF2 Ver. E (`gunsur2`). Experimental preview candidate; see the [public release notes](../../docs/preview-release.md) for publication status.
 The physical headset checklist remains open; compilation and simulator runs do not replace it.
 
 ## Automated checks
@@ -51,13 +51,12 @@ This evidence covers the sampled character and weapon, not every model in the ga
 
 Windows MSVC/OpenXR and Quest arm64 builds have succeeded during development. Final package
 commit, identity, signer and SHA-256 results are recorded beside the local artifacts in
-`dist/build-verification.json`. No headset installation or public upload is part of this task.
+`dist/build-verification.json`. This is the original local build record. The subsequent preview publishes these unchanged artifacts with the binary source tag recorded in the public release notes. No physical headset installation has been validated.
 
 Package checks enumerate contents, enforce app/launcher/version identity, require GPL/cgltf
 notices and model credits, compare the model file set between PC and Quest, and reject game
 archive, memory/rip, generated game-model and private signing-material paths. The PC ZIP has a
-checked portable launcher and VR/OpenGL/native-depth defaults. Local packages may use the
-public Android debug signer and must remain test builds.
+checked portable launcher and VR/OpenGL/native-depth defaults. Local test packages may use the public Android debug signer and must remain private test builds. The published preview uses the private project release signer (CN=VR Light Gun Hub); its signing key is not included.
 
 ## Remaining physical and game coverage
 

@@ -1,8 +1,23 @@
 # Survivor 2 VR
 
-Standalone Quest and PC OpenXR adaptation of **Resident Evil Survivor 2 – Code: Veronica**, NAOMI World BHF2 Ver. E (`gunsur2`). Local development build, **unreleased**.
+![Survivor 2 - Code: Veronica VR](docs/images/banner.svg)
+
+Standalone Quest and PC OpenXR adaptation of **Resident Evil Survivor 2 – Code: Veronica**, NAOMI World BHF2 Ver. E (`gunsur2`). **Experimental preview** for one player per app instance. Physical headset validation is pending.
 
 The port uses stereoscopic head tracking, a level first-person body camera, tracked controller aiming, native analog movement and 30° snap turns. It reuses the Confidential Mission/Lupin VR menus, setup and licensed gun/controller assets. One player per app instance is supported initially.
+
+## Downloads — v1.0.0-preview.1
+
+| Platform | Download |
+| --- | --- |
+| Meta Quest (arm64) | [Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.1/survivor2-code-veronica-vr-quest.apk) |
+| Windows x64 / PC OpenXR | [PC VR portable ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.1/survivor2-code-veronica-vr-pcvr.zip) |
+
+[Release notes and known limits](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.0-preview.1) · [SHA-256 checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.1/SHA256SUMS.txt) · [Corresponding binary source](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/tree/v1.0.0-preview.1)
+
+Both downloads were built from commit `24f8cf87f800ae31b1344826c4224227262602eb`. The release tag points to that exact source; `main` may include later documentation. The Quest APK uses the project's release signer and package `com.vrlightgunhub.survivor2`. No game or BIOS is included.
+
+On Quest, sideload the APK or use the **Survivor 2 - Code: Veronica VR** card in VR4ALL. Grant file access if requested, supply your game files below, then open the app under **Unknown Sources**. For PC VR, extract the ZIP, place the files in `roms`, activate your OpenXR runtime and run **Play Survivor 2.cmd**.
 
 ## Bring your own game
 
@@ -37,7 +52,7 @@ See [research findings](survivor2-vr/notes/findings.md) and [validation](survivo
 
 The current route covers World normal boot, native selections, cemetery combat, movement/collision, snap turn, tracked rays, native ammunition feedback, the common menu and focus transitions through the built-in OpenXR simulator. Controlled native collision experiments establish aiming independently of camera orientation.
 
-Physical Quest/PC headset comfort and performance, later stages, every weapon and both characters are not yet validated. There is no wider-FOV patch: turning beyond native submitted geometry can reveal undrawn space. These packages remain local development builds.
+Physical Quest/PC headset comfort and performance, later stages, every weapon and both characters are not yet validated. There is no wider-FOV patch: turning beyond native submitted geometry can reveal undrawn space. This preview is intended for early testing; later stages, weapons, melee, pickups, Claire, bosses, death/restart and long sessions remain unvalidated.
 
 ## Build and checks
 
