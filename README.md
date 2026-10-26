@@ -1,17 +1,17 @@
 <div align="center">
 
-<img src="hotd2-vr/assets/readme-banner.jpg" alt="Survivor 2 - Code: Veronica VR — experimental Quest and PC VR port" width="100%" />
+<img src="hotd2-vr/assets/readme-banner.jpg" alt="Survivor 2 - Code: Veronica VR — Quest and PC VR port" width="100%" />
 
 # Survivor 2 - Code: Veronica VR
 ### SEGA NAOMI Survival Action · Standalone Meta Quest & PC VR
 
-[![Release v1.0.0-preview.3](https://img.shields.io/badge/Release-v1.0.0--preview.2_Experimental-d34e5a?style=for-the-badge)](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.0-preview.3)
+[![Release v1.0.3](https://img.shields.io/badge/Release-v1.0.3-805ad5?style=for-the-badge)](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.3)
 [![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
 [![Original game required](https://img.shields.io/badge/Your_Game-gunsur2_World_BHF2_Ver._E-orange?style=for-the-badge)](#bring-your-own-game)
 
-**[⬇️ Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.3/survivor2-code-veronica-vr-quest.apk)** · **[🖥️ PC VR ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.3/survivor2-code-veronica-vr-pcvr.zip)** · **[🎮 Controls](#controls)**
+**[⬇️ Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.3/survivor2-code-veronica-vr-quest.apk)** · **[🖥️ PC VR ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.3/survivor2-code-veronica-vr-pcvr.zip)** · **[🎮 Controls](#controls)**
 
-[Checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.3/SHA256SUMS.txt) · [All releases](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases)
+[Checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.3/SHA256SUMS.txt) · [All releases](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases)
 
 **[🌐 VR4ALL — Standalone VR Mod Installer](https://github.com/vr4all-standalone/vr4all-standalone-vr-mod-installer)**
 
@@ -21,19 +21,19 @@
 
 ## Overview
 
-Standalone Quest and PC OpenXR adaptation of **Resident Evil Survivor 2 – Code: Veronica**, NAOMI World BHF2 Ver. E (`gunsur2`). **Experimental preview** for one player per app instance. The user reports successful headset gameplay on preview 1. The weapon update has separate automated and simulator checks; physical testing of this update remains open.
+Standalone Quest and PC OpenXR adaptation of **Resident Evil Survivor 2 – Code: Veronica**, NAOMI World BHF2 Ver. E (`gunsur2`). Supports one player per app instance.
 
 The port uses stereoscopic head tracking, a level first-person body camera, tracked controller aiming, native analog movement and 30° snap turns. It reuses the Confidential Mission/Lupin VR menus, setup and licensed gun/controller assets. One player per app instance is supported initially.
 
 <a id="installation"></a>
-## Downloads — v1.0.0-preview.2
+## Downloads — v1.0.3
 
 | Platform | Download |
 | --- | --- |
-| Meta Quest (arm64) | [Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.2/survivor2-code-veronica-vr-quest.apk) |
-| Windows x64 / PC OpenXR | [PC VR portable ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.2/survivor2-code-veronica-vr-pcvr.zip) |
+| Meta Quest (arm64) | [Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.3/survivor2-code-veronica-vr-quest.apk) |
+| Windows x64 / PC OpenXR | [PC VR portable ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.3/survivor2-code-veronica-vr-pcvr.zip) |
 
-[Release notes and known limits](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.0-preview.2) · [SHA-256 checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.0-preview.2/SHA256SUMS.txt) · [Corresponding binary source](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/tree/v1.0.0-preview.2)
+[Release notes and known limits](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.3) · [SHA-256 checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.3/SHA256SUMS.txt) · [Corresponding binary source](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/tree/v1.0.3)
 
 Both downloads are built from the exact source commit identified by the release tag and the APK version suffix. `main` may include later documentation. The Quest APK uses the project's release signer and package `com.vrlightgunhub.survivor2`. No game or BIOS is included.
 
@@ -73,7 +73,7 @@ See [research findings](survivor2-vr/notes/findings.md) and [validation](survivo
 
 The current route covers World normal boot, native selections, cemetery combat, movement/collision, snap turn, tracked rays, native ammunition feedback, the common menu and focus transitions through the built-in OpenXR simulator. Controlled native collision experiments establish aiming independently of camera orientation.
 
-The user tested preview 1 successfully on a headset. Physical testing of this weapon update, sustained Quest/PC performance, later stages and both full character routes remain open. There is no wider-FOV patch: turning beyond native submitted geometry can reveal undrawn space. This preview is intended for early testing; later stages, melee, natural pickup routes, Claire’s full route, bosses, death/restart and long sessions remain unvalidated.
+An earlier build received successful headset testing feedback. Physical testing of this weapon update, sustained Quest/PC performance, later stages and both full character routes remain open. There is no wider-FOV patch: turning beyond native submitted geometry can reveal undrawn space. Later stages, melee, natural pickup routes, Claire’s full route, bosses, death/restart and long sessions remain unvalidated.
 
 ## Build and checks
 
@@ -93,7 +93,7 @@ Quest needs JDK 17, Android SDK/NDK and Gradle dependencies:
 hotd2-vr\build-quest.cmd
 ```
 
-`JAVA_HOME`, `ANDROID_HOME` and `GRADLE_USER_HOME` may select existing independent toolchains/caches. The Android app is `com.vrlightgunhub.survivor2`, versionCode 2, versionName `1.0.0-g<source>`, launcher `Survivor2StartActivity`.
+`JAVA_HOME`, `ANDROID_HOME` and `GRADLE_USER_HOME` may select existing independent toolchains/caches. The Android app is `com.vrlightgunhub.survivor2`, versionCode 4, versionName `1.0.3-g<source>`, launcher `Survivor2StartActivity`.
 
 Focused native checks:
 

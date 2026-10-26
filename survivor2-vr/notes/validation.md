@@ -1,6 +1,6 @@
 # Survivor 2 VR validation
 
-Target: NAOMI World BHF2 Ver. E (`gunsur2`). Experimental preview candidate; see the [public release notes](../../docs/preview-release.md) for publication status.
+Target: NAOMI World BHF2 Ver. E (`gunsur2`). See the [current release notes](../../docs/release-notes.md) for publication status.
 The physical headset checklist remains open; compilation and simulator runs do not replace it.
 
 ## Automated checks
