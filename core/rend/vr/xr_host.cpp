@@ -23,6 +23,7 @@
 #include "xr_menu.h"
 #include "xr_panel.h"
 #include "vr4all_splash.h"
+#include "service_hold.h"
 #include "xr_sim.h"
 #include "xr_own.h"
 #include "hands_rip.h"
@@ -192,6 +193,9 @@ Gun guns[2] { { 0 }, { 1, Left } };
 bool dualWield;
 XrTime dualSince;
 bool p2StartWas, recenterWas, laserWas, menuWas;
+bool p2JoinPending; // request only; native membership controls the second gun
+StartReleaseGate startRelease;
+ServiceHold serviceHold;
 // A physical Start press keeps its logical player until release across every layout transition.
 bool startHeld[2] {};
 int startPlayer[2] { 1, 0 };
@@ -254,6 +258,7 @@ struct NewGameRegistration
 {
 	NewGameRegistration() {
 		EventManager::listen(Event::Start, [](Event, void *) { newGame = true; splashReset = true; });
+		EventManager::listen(Event::LoadState, [](Event, void *) { newGame = true; });
 	}
 } newGameRegistration;
 // How to play: the hands that hold their controllers show them, with the labels: before the game's
@@ -2046,6 +2051,11 @@ void updateMenu(XrTime time, bool menuEdge, bool skip, bool skipEdge)
 	}
 }
 
+int startButtonOwner(int hand)
+{
+	return startHeld[hand] ? startPlayer[hand] : -1;
+}
+
 void playerStartButtons(bool leftStart, bool rightStart, bool& p1Start, bool& p2Start)
 {
 	const bool starts[2] { leftStart, rightStart };
@@ -2062,6 +2072,65 @@ void playerStartButtons(bool leftStart, bool rightStart, bool& p1Start, bool& p2
 	p2Start = players[1];
 }
 
+// Sample raw buttons first so loading holds cannot become taps when ready changes.
+void resetStartGestures()
+{
+    startRelease.reset();
+    serviceHold.reset();
+    lightgunService(false);
+}
+
+void sampleStartButtons(XrTime time, bool leftDown, bool rightDown, bool ready,
+        bool physicalA, bool allowed, bool& p1Start, bool& p2Start)
+{
+    const bool left = startRelease.sample(Left, leftDown, ready && allowed);
+    const bool right = startRelease.sample(Right, rightDown, ready && allowed);
+    const int owner = Right == p1Hand() ? 0 : 1;
+    playerStartButtons(left, right, p1Start, p2Start);
+    if (physicalA && !config::GGPOEnable)
+    {
+        const bool fired = serviceHold.fired;
+        const bool wasHeld = serviceHold.held;
+        const bool test = serviceHold.update(time, rightDown, allowed, ready, owner);
+        lightgunService(test);
+        if (!wasHeld && serviceHold.held) NOTICE_LOG(INPUT, "XR: A hold service countdown started");
+        if (!fired && serviceHold.fired)
+        {
+            haptic(Right, 0.08f, 0.65f);
+            NOTICE_LOG(INPUT, "XR: Service Menu after 3-second A hold");
+        }
+        p1Start = (left && startButtonOwner(Left) == 0) || serviceHold.startPlayer() == 0;
+        p2Start = (left && startButtonOwner(Left) == 1) || serviceHold.startPlayer() == 1;
+    }
+    else
+    {
+        serviceHold.reset();
+        lightgunService(false);
+    }
+}
+
+void drawServiceHold(const glm::mat4& viewProj)
+{
+    if (!serviceHold.visible()) return;
+    const glm::mat4 model = glm::translate(headPose(), glm::vec3(0.f, -0.23f, -1.1f));
+    drawTexture(viewProj, model, 0, .48f, .13f, glm::vec4(theme::Accent, 1.f));
+    drawTexture(viewProj, glm::translate(model, glm::vec3(0.f,0.f,.001f)), 0, .477f, .127f, glm::vec4(theme::Background,1.f));
+    const char* lines[2] { "Hold A for 3 seconds", "to open Service Menu" };
+    for (int line=0; line<2; ++line)
+    {
+        int w=0,h=0;
+        const unsigned texture = textTexture(lines[line], 38.f, line==0 ? theme::Accent : theme::Text, w, h);
+        if (texture && w>0)
+            drawTexture(viewProj, glm::translate(model, glm::vec3(0.f,.057f-.057f*line,.002f)),
+                texture, .028f*w/h, .028f);
+    }
+    const glm::mat4 bar = glm::translate(model, glm::vec3(0.f,-.085f,.003f));
+    drawTexture(viewProj, bar, 0, .42f, .008f, glm::vec4(theme::Line,1.f));
+    const float half = .42f * serviceHold.progress();
+    if (half>0.f) drawTexture(viewProj, glm::translate(bar,glm::vec3(-.42f+half,0.f,.001f)),
+        0, half, .008f, glm::vec4(theme::Accent,1.f));
+}
+
 void updateLightgun(XrTime time, bool headTracked)
 {
 	for (Gun& g : guns)
@@ -2069,9 +2138,12 @@ void updateLightgun(XrTime time, bool headTracked)
 	pointerShown[Left] = pointerShown[Right] = false;
 	if (config::VrXrGun && newGame.exchange(false))
 	{
-		if (dualWield)
+		if (dualWield || p2JoinPending)
 			lightgunSet(1, OffScreen, OffScreen, 0);
-		dualWield = false;
+		dualWield = p2JoinPending = false;
+		startRelease.reset();
+		serviceHold.reset();
+		lightgunService(false);
 		startHeld[Left] = startHeld[Right] = false;
 		guns[1] = Gun { 1, Left };
 		guns[0].triggerWas = true;
@@ -2100,6 +2172,7 @@ void updateLightgun(XrTime time, bool headTracked)
 	const bool preparing = hands::preparing();
 	if (!focused)
 	{
+		resetStartGestures();
 		if (vr::survivor::game()) vr::survivor::neutral();
 		// headset menu or app in the background: let go of everything
 		if (config::VrXrGun && !preparing && !menuOpen)
@@ -2120,6 +2193,7 @@ void updateLightgun(XrTime time, bool headTracked)
 	sync.activeActionSets = &active;
 	if (!XR_SUCCEEDED(XR(xrSyncActions)(session, &sync)))
 	{
+		resetStartGestures();
 		if (vr::survivor::game()) vr::survivor::neutral();
 		return;
 	}
@@ -2155,7 +2229,10 @@ void updateLightgun(XrTime time, bool headTracked)
 	// Sample presses and releases even while paused; only the game-input send is suppressed.
 	const bool rightStart = boolAction(startAction, Right) && !startSwallow;
 	bool p1Start, p2Start;
-	playerStartButtons(leftStart, rightStart, p1Start, p2Start);
+    const bool physicalA = profiles[Right].find("touch_controller") != std::string::npos
+            || profiles[Right] == "/interaction_profiles/valve/index_controller";
+    sampleStartButtons(time, leftStart, rightStart, gameStartReady(), physicalA,
+            config::VrXrGun && focused && !preparing && !menuOpen && !menuEdge && !startSwallow, p1Start, p2Start);
 	// B (or Y; Vive wands, Windows Mixed Reality: a pad click): the game's reload, or not now for
 	// the gun run, or the VR menu closed
 	const bool skip = boolAction(skipAction);
@@ -2260,7 +2337,7 @@ void updateLightgun(XrTime time, bool headTracked)
 		sample.focused = focused && originSet && headTracked && vr::survivor::ready();
 		sample.menu = menuOpen; sample.aimTracked = tracked[nativeGun.hand]; sample.motionTracked = tracked[Left] && tracked[Right];
 		sample.x = move.x; sample.y = move.y; sample.turn = turning.x;
-		sample.pull = pulls[nativeGun.hand]; sample.action = skip && !skipSwallow; sample.enter = rightStart || leftStart;
+		sample.pull = pulls[nativeGun.hand]; sample.action = skip && !skipSwallow; sample.enter = p1Start || p2Start;
 		const auto control = gate.update(sample);
 		if (control.input.buttons) p1Armed = true;
 		updateGun(nativeGun, time, locations, tracked, pulls, 0, false, sample.focused && !menuOpen);
@@ -2284,9 +2361,22 @@ void updateLightgun(XrTime time, bool headTracked)
 	// that shows when player 2 is out again (its profile knows the prompt). Not online
 	// (GGPO): player 2 is the other player there and only this side's player 1 is sent, so
 	// there player 2's Start does nothing.
-	const bool canJoin = config::VrDualWield && !config::GGPOEnable && player2PromptKnown() && tracked[Left] && tracked[Right];
-	if (canJoin && p2Start && !p2StartWas && !dualWield)
+	const bool canJoin = config::VrDualWield && !config::GGPOEnable && player2PromptKnown();
+	// Loading presses are consumed. P2's gun waits for the native join acknowledgment.
+	if (canJoin && playerInGame(0) && tracked[Left] && tracked[Right]
+			&& p2Start && !p2StartWas && !dualWield)
 	{
+		p2JoinPending = true;
+		dualSince = time;
+	}
+	if (p2JoinPending && (!canJoin || (time - dualSince > 4'000'000'000LL && !playerInGame(1))))
+	{
+		p2JoinPending = false;
+		lightgunSet(1, OffScreen, OffScreen, 0);
+	}
+	if (canJoin && p2JoinPending && playerInGame(1) && !dualWield)
+	{
+		p2JoinPending = false;
 		dualWield = true;
 		dualSince = time;
 		if (guns[0].hand != dualP1Hand())
@@ -2307,8 +2397,7 @@ void updateLightgun(XrTime time, bool headTracked)
 		noteHolds("player 2 joins");
 	}
 	p2StartWas = p2Start;
-	if (dualWield && (!config::VrDualWield || config::GGPOEnable || !player2PromptKnown()
-			|| ((time - dualSince) > 4'000'000'000LL && player2Prompting())))
+	if (dualWield && (!config::VrDualWield || config::GGPOEnable || !playerInGame(1)))
 	{
 		dualWield = false;
 		lightgunSet(1, OffScreen, OffScreen, 0);
@@ -2360,6 +2449,9 @@ void updateLightgun(XrTime time, bool headTracked)
 	}
 	else
 		p1 |= (p1Start ? 4 : 0) | (skip && !skipSwallow ? 128 : 0);
+
+	if (p2JoinPending)
+		lightgunSet(1, OffScreen, OffScreen, p2Start ? 4 : 0);
 
 	// The game's first Start of player 1's or trigger pull: player 1 takes the gun (in the pull's hand,
 	// moved there above) and the controllers and labels go. (The menu's How to play is over by now: it
@@ -2940,7 +3032,10 @@ void term()
 	originSet = recenterRequested = false;
 	guns[0] = Gun { 0 };
 	guns[1] = Gun { 1, Left };
-	dualWield = p2StartWas = recenterWas = laserWas = menuWas = p1StartWas = false;
+	startRelease.reset();
+	serviceHold.reset();
+	lightgunService(false);
+	dualWield = p2JoinPending = p2StartWas = recenterWas = laserWas = menuWas = p1StartWas = false;
 	startHeld[Left] = startHeld[Right] = false;
 	skipWas = skipSwallow = false;
 	// (what the hands hold stays, p1Armed and menuHowToPlay: player 2's gun went without a word)
@@ -3284,6 +3379,12 @@ bool frame()
 					if (controllerShown[hand] && holds(hand) == Holds::Controller)
 						labels::draw(viewProj, hand, controllerGrip[hand], controllerAim[hand], profiles[hand].c_str());
 		}
+        if (serviceHold.visible())
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, c.fbos[index]);
+            glViewport(0, 0, c.width, c.height);
+            drawServiceHold(eyeProjection(views[i].fov) * view);
+        }
 		if (i == 0)
 		{
 			captureIfRequested(c.fbos[index], c.width, c.height);
