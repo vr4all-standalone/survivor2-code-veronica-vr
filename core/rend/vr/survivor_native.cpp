@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "survivor_native.h"
+#include "survivor_service.h"
+#include "xr_host.h"
 #include "survivor_input.h"
 #include "rend/vr_reproject.h"
 #include "hw/sh4/sh4_core.h"
@@ -50,6 +52,9 @@ namespace {
   const bool valid=world()&&config::VrReproject&&signature();available=valid;
   if(!valid){turn=0;return;}
   for(uint32_t entry:{ProjectileDone,RayEntry,AmmoEntry,CameraEntry,DrawCalls[0],DrawCalls[1],DrawCalls[2],DrawCalls[3]})if(ReadMem16_nommu(0x8c000000+entry)!=TrapOpcode)WriteMem16_nommu(0x8c000000+entry,TrapOpcode);
+  if(serviceReturnSignature([](uint32_t offset){return ReadMem16_nommu(0x8c000000+offset);})
+     &&ReadMem16_nommu(0x8c000000+ServiceReturn)!=TrapOpcode)
+   WriteMem16_nommu(0x8c000000+ServiceReturn,TrapOpcode);
   if(!logged){NOTICE_LOG(RENDERER,"VR: Survivor 2 World native ray and shot hooks ready");logged=true;}
   const bool active=playing();
   if(active!=activePhase){activePhase=active;neutral();NOTICE_LOG(INPUT,"VR: Survivor gameplay phase %s",active?"active":"inactive");}
@@ -73,7 +78,16 @@ void publishAim(Vec origin,Vec forward){std::lock_guard<std::mutex> lock(aimMute
 void requestTurn(int direction){turn=direction>0?1:direction<0?-1:0;}
 bool gunState(int player,vr::GunState& out){if(!game())return false;std::lock_guard<std::mutex> lock(stateMutex);out=player==0?state:vr::GunState{};return true;}
 bool handleTrap(Sh4Context* ctx,uint32_t pc){
- if((pc!=0x8c000000+ProjectileDone&&pc!=0x8c000000+RayEntry&&pc!=0x8c000000+AmmoEntry&&pc!=0x8c000000+CameraEntry&&!drawCall(pc-0x8c000000))||!world()||ReadMem16_nommu(pc)!=TrapOpcode)return false;
+ if((pc!=0x8c000000+ProjectileDone&&pc!=0x8c000000+RayEntry&&pc!=0x8c000000+AmmoEntry&&pc!=0x8c000000+CameraEntry&&pc!=0x8c000000+ServiceReturn&&!drawCall(pc-0x8c000000))||!world()||ReadMem16_nommu(pc)!=TrapOpcode)return false;
+ if(pc==0x8c000000+ServiceReturn){
+  // Original D415: MOV.L @(0x15,PC),r4. REIOS already advances PC by two.
+  ctx->r[4]=ReadMem32_nommu((pc&~3u)+4+0x15*4);
+  if(signature()&&serviceReturnSignature([](uint32_t offset){return ReadMem16_nommu(0x8c000000+offset);})){
+   vr::xr::notifyServiceGameBoot();
+   NOTICE_LOG(INPUT,"XR: Survivor native Service modal returned to main game");
+  }
+  return true;
+ }
  if(pc==0x8c000000+ProjectileDone){
   // Original ADD #8,r15. At this single creation exit, r14 is the new entity,
   // r13 its descriptor, and the original PR/r14 remain in the native stack frame.
