@@ -5,7 +5,7 @@
 # Survivor 2 - Code: Veronica VR
 ### SEGA NAOMI Survival Action · Standalone Meta Quest & PC VR
 
-[![Release v1.0.5](https://img.shields.io/badge/Release-v1.0.5-805ad5?style=for-the-badge)](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.4)
+[![Release v1.0.6](https://img.shields.io/badge/Release-v1.0.6-805ad5?style=for-the-badge)](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.4)
 [![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
 [![Original game required](https://img.shields.io/badge/Your_Game-gunsur2_World_BHF2_Ver._E-orange?style=for-the-badge)](#bring-your-own-game)
 
@@ -18,6 +18,10 @@
 </div>
 
 ---
+
+## Update v1.0.6
+
+Validated automatic entry, full P1 red/P2 blue Arcade body and grip with grey details preserved, and a new gun-angle zero matching the old -10 degree pose. Legacy angles reset once; later adjustments persist. [Release notes](docs/releases/v1.0.6.md).
 
 ## Overview
 

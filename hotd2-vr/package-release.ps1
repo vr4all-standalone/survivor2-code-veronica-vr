@@ -52,7 +52,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 # src\vr\AndroidManifest.xml), its library entry, and the PC zip's start script (hotd2-vr\assets).
 $appId = 'com.vrlightgunhub.survivor2'
 $appLabel = 'Survivor 2 - Code: Veronica VR'
-$appVersion = '1.0.5'
+$appVersion = '1.0.6'
 $appLauncher = 'com.flycast.emulator.Survivor2StartActivity'
 $playCmd = 'Play Survivor 2.cmd'
 
@@ -422,7 +422,7 @@ rend.NativeDepthInterpolation = yes
 vr.Xr = yes
 '@
 $readme = @'
-Survivor 2 - Code: Veronica VR, PC version 1.0.5
+Survivor 2 - Code: Veronica VR, PC version 1.0.6
 Resident Evil Survivor 2 - Code: Veronica (NAOMI World BHF2 Ver. E)
 
 Free roaming with tracked aiming and stereoscopic head tracking. One player per app
