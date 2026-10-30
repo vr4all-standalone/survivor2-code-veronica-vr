@@ -51,8 +51,8 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 # The app: its application ID, label and version (shell\android-studio\flycast\build.gradle.kts and
 # src\vr\AndroidManifest.xml), its library entry, and the PC zip's start script (hotd2-vr\assets).
 $appId = 'com.vrlightgunhub.survivor2'
-$appLabel = 'Survivor 2 - Code: Veronica VR'
-$appVersion = '1.0.6'
+$appLabel = 'Survivor 2 - Code: Veronica - VR4ALL'
+$appVersion = '1.0.7'
 $appLauncher = 'com.flycast.emulator.Survivor2StartActivity'
 $playCmd = 'Play Survivor 2.cmd'
 
@@ -223,7 +223,7 @@ function Find-AppIdentityFault([string[]]$badgingLines, [string[]]$manifestTree,
     $badging = $badgingLines | Where-Object { $_ -match '^package:' } | Select-Object -First 1
     $wantVersion = [regex]::Escape("$appVersion-g") + $(if ($testBuild) { '[0-9a-f]+' } else { [regex]::Escape($shortHash) })
     if ($badging -notmatch "^package: name='$([regex]::Escape($appId))'") { "the package is not $appId" }
-    if ($badging -notmatch "versionCode='7'") { 'the versionCode is not 7' }
+    if ($badging -notmatch "versionCode='8'") { 'the versionCode is not 8' }
     if ($badging -notmatch "versionName='$wantVersion'") {
         "the versionName is not $appVersion-g$(if ($testBuild) { '<commit>' } else { $shortHash })"
     }
@@ -422,7 +422,7 @@ rend.NativeDepthInterpolation = yes
 vr.Xr = yes
 '@
 $readme = @'
-Survivor 2 - Code: Veronica VR, PC version 1.0.6
+Survivor 2 - Code: Veronica - VR4ALL, PC version 1.0.7
 Resident Evil Survivor 2 - Code: Veronica (NAOMI World BHF2 Ver. E)
 
 Free roaming with tracked aiming and stereoscopic head tracking. One player per app

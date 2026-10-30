@@ -42,7 +42,7 @@ function Archive([string]$name, [hashtable]$entries) {
 }
 try {
     Check 'Survivor application ID' ($appId -eq 'com.vrlightgunhub.survivor2')
-    Check 'Survivor label' ($appLabel -eq 'Survivor 2 - Code: Veronica VR')
+    Check 'Survivor label' ($appLabel -eq 'Survivor 2 - Code: Veronica - VR4ALL')
     Check 'Survivor release base version' ($appVersion -eq '1.0.5')
     Check 'Survivor setup launcher' ($appLauncher -eq 'com.flycast.emulator.Survivor2StartActivity')
     Check 'Survivor PC launcher name' ($playCmd -eq 'Play Survivor 2.cmd')
@@ -62,7 +62,7 @@ try {
     Check 'credited model accepted' (@(Find-UncreditedModels $archive).Count -eq 0)
     $gpl = Get-Content -LiteralPath (Join-Path $repo 'core/deps/picotcp/LICENSE.GPLv3') -Raw
     $mit = Get-Content -LiteralPath (Join-Path $repo 'core/deps/cgltf/LICENSE') -Raw
-    $licence = "Survivor 2 - Code: Veronica VR`n$gpl`n$mit"
+    $licence = "Survivor 2 - Code: Veronica - VR4ALL`n$gpl`n$mit"
     $archive = Archive 'licensed.zip' @{'LICENSE.txt'=$licence}
     Check 'GPL-3 and cgltf notice accepted' (-not (Find-LicenceFault $archive))
     $archive = Archive 'missing-mit.apk' @{'assets/LICENSE.txt'=$gpl}
@@ -79,7 +79,7 @@ try {
         '  E: application', '    E: activity', '      A: android:name(0x01010003)="com.flycast.emulator.Survivor2StartActivity"',
         '      E: intent-filter', '        E: category', '          A: android:name(0x01010003)="android.intent.category.LAUNCHER"')
     Check 'manifest launcher parser uses activity owner' (@(Get-LauncherOwners $tree) -join ',' -eq 'com.flycast.emulator.Survivor2StartActivity')
-    $badging = @("package: name='com.vrlightgunhub.survivor2' versionCode='6' versionName='1.0.5-gabc123'", "application-label:'Survivor 2 - Code: Veronica VR'")
+    $badging = @("package: name='com.vrlightgunhub.survivor2' versionCode='6' versionName='1.0.5-gabc123'", "application-label:'Survivor 2 - Code: Veronica - VR4ALL'")
     $hasIdentityCheck = [bool](Get-Command Find-AppIdentityFault -ErrorAction SilentlyContinue)
     Check 'APK metadata validator is independently testable' $hasIdentityCheck
     if ($hasIdentityCheck) {
@@ -89,7 +89,7 @@ try {
             @('version code', "versionCode='6'", "versionCode='9'"),
             @('base version', '1.0.5-gabc123', '1.2.0-gabc123'),
             @('commit version', '1.0.5-gabc123', '1.0.5-gdef456'),
-            @('label', 'Survivor 2 - Code: Veronica VR', 'Confidential Mission VR'))) {
+            @('label', 'Survivor 2 - Code: Veronica - VR4ALL', 'Confidential Mission VR'))) {
             $changed = @($badging | ForEach-Object { $_.Replace($case[1],$case[2]) })
             Check "wrong APK $($case[0]) rejected" (@(Find-AppIdentityFault $changed $tree 'abc123' $false).Count -gt 0)
         }
@@ -104,7 +104,7 @@ try {
     Check 'portable PC archive validator is independently testable' $hasPcCheck
     if ($hasPcCheck) {
         $files = @('flycast.exe','emu.cfg','README.txt','LICENSE.txt','Play Survivor 2.cmd','Check Survivor 2 Files.ps1')
-        $readme = 'Survivor 2 - Code: Veronica VR. Implementation in progress. roms\gunsur2.zip roms\naomi.zip Play Survivor 2.cmd'
+        $readme = 'Survivor 2 - Code: Veronica - VR4ALL. Implementation in progress. roms\gunsur2.zip roms\naomi.zip Play Survivor 2.cmd'
         $entries = @{'flycast.exe'='synthetic'; 'emu.cfg'="[config]`npvr.rend = 0`nrend.NativeDepthInterpolation = yes`nvr.Xr = yes"; 'README.txt'=$readme; 'LICENSE.txt'=$licence; 'Check Survivor 2 Files.ps1'='synthetic checker'; 'Play Survivor 2.cmd'='rem Check Survivor 2 Files.ps1; if errorlevel 1 exit /b 1; start "" /D "%~dp0" "%~dp0flycast.exe" "%~dp0roms\gunsur2.zip"'}
         $archive = Archive 'portable-valid.zip' $entries
         Check 'exact portable Survivor archive accepted' (@(Find-PcArchiveFault $archive $files).Count -eq 0)
@@ -141,7 +141,7 @@ try {
         if ($productionFaults.Count) { $productionFaults | ForEach-Object { Write-Host "Template fault: $_" } }
         Check 'production README config and launcher satisfy portable checks' ($productionFaults.Count -eq 0)
         Check 'packaged README names version 1.0.5' ($generatedReadme.Contains('version 1.0.5'))
-        $entries['README.txt'] = $readme.Replace('Survivor 2 - Code: Veronica VR','Confidential Mission VR')
+        $entries['README.txt'] = $readme.Replace('Survivor 2 - Code: Veronica - VR4ALL','Confidential Mission VR')
         $archive = Archive 'portable-wrong-readme.zip' $entries
         Check 'stale CM README rejected' (@(Find-PcArchiveFault $archive $files).Count -gt 0)
         $entries['README.txt'] = $readme
