@@ -5,23 +5,25 @@
 # Survivor 2 - Code: Veronica VR
 ### SEGA NAOMI Survival Action · Standalone Meta Quest & PC VR
 
-[![Release v1.0.6](https://img.shields.io/badge/Release-v1.0.6-805ad5?style=for-the-badge)](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.4)
+[![Release v1.0.9](https://img.shields.io/badge/Release-v1.0.9-805ad5?style=for-the-badge)](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.9)
 [![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
 [![Original game required](https://img.shields.io/badge/Your_Game-gunsur2_World_BHF2_Ver._E-orange?style=for-the-badge)](#bring-your-own-game)
 
-**[⬇️ Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.4/survivor2-code-veronica-vr-quest.apk)** · **[🖥️ PC VR ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.4/survivor2-code-veronica-vr-pcvr.zip)** · **[🎮 Controls](#controls)**
+**[⬇️ Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.9/survivor2-code-veronica-vr-quest.apk)** · **[🖥️ PC VR ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.9/survivor2-code-veronica-vr-pcvr.zip)** · **[🎮 Controls](#controls)**
 
-[Checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.4/SHA256SUMS.txt) · [All releases](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases)
+[Checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.9/SHA256SUMS.txt) · [All releases](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases)
 
-**[🌐 VR4ALL — Standalone VR Mod Installer](https://github.com/vr4all-standalone/vr4all-standalone-vr-mod-installer)**
+**[🌐 VR4ALL — Standalone VR Mod Installer](https://github.com/vr4all-standalone/vr4all-standalone)**
+
+[☕ Donate to VR4ALL](https://ko-fi.com/vr4all)
 
 </div>
 
 ---
 
-## Update v1.0.6
+## Update v1.0.9
 
-Validated automatic entry, full P1 red/P2 blue Arcade body and grip with grey details preserved, and a new gun-angle zero matching the old -10 degree pose. Legacy angles reset once; later adjustments persist. [Release notes](docs/releases/v1.0.6.md).
+Adds sectioned VR settings, Crosshair and laser controls, Wider view Off/On/Fade, and required weapon setup from your cartridge. Saved World size is preserved. [Release notes](docs/releases/v1.0.9.md).
 
 ## Overview
 
@@ -30,14 +32,14 @@ Standalone Quest and PC OpenXR adaptation of **Resident Evil Survivor 2 – Code
 The port uses stereoscopic head tracking, a level first-person body camera, tracked controller aiming, native analog movement and 30° snap turns. It reuses the Confidential Mission/Lupin VR menus, setup and licensed gun/controller assets. One player per app instance is supported initially.
 
 <a id="installation"></a>
-## Downloads — v1.0.4
+## Downloads — v1.0.9
 
 | Platform | Download |
 | --- | --- |
-| Meta Quest (arm64) | [Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.4/survivor2-code-veronica-vr-quest.apk) |
-| Windows x64 / PC OpenXR | [PC VR portable ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.4/survivor2-code-veronica-vr-pcvr.zip) |
+| Meta Quest (arm64) | [Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.9/survivor2-code-veronica-vr-quest.apk) |
+| Windows x64 / PC OpenXR | [PC VR portable ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.9/survivor2-code-veronica-vr-pcvr.zip) |
 
-[Release notes and known limits](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.4) · [SHA-256 checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.4/SHA256SUMS.txt) · [Corresponding binary source](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/tree/v1.0.4)
+[Release notes and known limits](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.9) · [SHA-256 checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.9/SHA256SUMS.txt) · [Corresponding binary source](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/tree/v1.0.9)
 
 Both downloads are built from the exact source commit identified by the release tag and the APK version suffix. `main` may include later documentation. The Quest APK uses the project's release signer and package `com.vrlightgunhub.survivor2`. No game or BIOS is included.
 
@@ -63,13 +65,13 @@ No game, BIOS, extracted game model, raw memory capture or signing key belongs i
 | B / Y | Native gun button / action |
 | Left Menu | Pause and open VR settings |
 | Left stick click | Recenter |
-| Right stick click | Toggle laser |
+| Right stick click | Toggle laser and Crosshair |
 
 Reload follows the native game. Focus loss, tracking loss and paused menus release inputs; held controls wait for release before resuming. Movement currently requires both controllers tracked.
 
-The common 13-row menu is Resume, Recenter, Gun, Gun angle, Reload, Two players, Laser, Haptics, World size, Panel distance, Wider view, How to play, Quit. Survivor displays **Native automatic**, **Single player** and **Unavailable** for the Reload, Two players and Wider view rows; those three controls are disabled. The shared two-player layouts used by other games remain `P1 left / P2 right` and `P1 right / P2 left` in their own profiles.
+The purple settings menu groups controls into **Gun**, **World**, **System**, and **In-game**. Wider view can clip to the original raster, show the submitted surroundings, or fade them out. HUD size applies to eligible overlays in On and Fade. Use the **In-game** tab to open the original Namco Service menu.
 
-The **Gun → In-game weapons** option automatically follows the weapon equipped by the game: **BR-93R, Python, Gold Luger, Ingram, SPAS-12, AK47S, M79 and LN-02 (linear launcher)**. First launch prepares the complete weapon meshes and textures locally from your own cartridge, excluding the native character hands. B or Y skips preparation and uses the licensed fallback for that session; reopening the app retries missing models. Weapon pickups, swapping, ammunition and reload remain native. Arcade, Zapper and compatible custom GLB guns are also supported; an explicit custom choice overrides automatic weapon presentation. The Ingram firing phase keeps the original arms hidden. Native accepted rounds drive recoil/flash/haptics. Haptics has Off, Light, Medium and Strong settings. Credits for bundled models travel with both packages.
+The **Gun → In-game weapons** option automatically follows the weapon equipped by the game: **BR-93R, Python, Gold Luger, Ingram, SPAS-12, AK47S, M79 and LN-02 (linear launcher)**. First launch prepares the complete weapon meshes and textures locally from your own cartridge, excluding the native character hands. Setup is required in VR. A valid local cache is reused, and a failed preparation shows recovery instructions. Weapon pickups, swapping, ammunition and reload remain native. Arcade, Zapper and compatible custom GLB guns are also supported; an explicit custom choice overrides automatic weapon presentation. The Ingram firing phase keeps the original arms hidden. Native accepted rounds drive recoil/flash/haptics. Haptics has Off, Light, Medium and Strong settings. Credits for bundled models travel with both packages.
 
 ## Verified scope and limits
 
