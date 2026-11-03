@@ -243,7 +243,7 @@ SettingsPanel panel(const std::vector<int>& rows)
             r.choice = choices.empty() ? -1 : gunAt(choices);
         }
         if (row == WiderView && vr::survivor::game()) { r.choices = { "Off", "On", "Fade" }; r.choice = vr::survivor::view::mode(config::VrWidenMode); }
-        if (row == Laser) { r.choices = { "Off", "Normal", "2x", "5x", "10x" }; r.choice = vr::laser::choice(config::VrLaser, config::VrLaserWidth); }
+        if (row == Laser) { r.choices = { "Off", "Normal", "5x", "10x" }; r.choice = vr::laser::choice(config::VrLaser, config::VrLaserWidth); }
         if (row == Reticle) { r.choices = { "Custom", "None" }; r.choice = vr::reticle::mode(config::VrReticleMode) - 1; }
         if (row == Haptics) { r.choices = { "Off", "Light", "Medium", "Strong" }; r.choice = hapticsLevel(); }
         if (row == HowToPlay) { r.choices = { "Off", "On" }; r.choice = howToPlayOn(); }
@@ -274,7 +274,7 @@ void selectGun(const GunChoice& choice)
 void selectLaser(int choice)
 {
     config::VrLaser.set(choice != 0);
-    if (choice != 0) config::VrLaserWidth.set(choice);
+    if (choice != 0) config::VrLaserWidth.set(vr::laser::savedWidth(choice));
     config::setAutoSave(false);
     config::saveBool("config", "vr.Laser", config::VrLaser);
     config::saveInt("config", "vr.LaserWidth", config::VrLaserWidth);

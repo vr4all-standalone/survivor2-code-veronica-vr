@@ -13,7 +13,7 @@ fun gitVersionName(): String {
 
 // hotd2-vr: Survivor 2 - Code: Veronica VR's own version. The vr build's versionName is "<hubVersion>-g<commit>"
 // (set in androidComponents below); each standalone update increments versionCode.
-val hubVersion = "1.0.10"
+val hubVersion = "1.0.11"
 
 fun gitShortHash(): String {
     return providers.exec {
@@ -49,7 +49,7 @@ android {
         applicationId = "com.flycast.emulator"
         minSdk = 29     // hotd2-vr: Quest only (the OpenXR loader needs 24+)
         targetSdk = 36
-        versionCode = 11
+        versionCode = 12
         versionName = gitVersionName()
         vectorDrawables.useSupportLibrary = true
 
@@ -240,7 +240,7 @@ androidComponents {
         variant.applicationId.set("com.vrlightgunhub.survivor2")
         variant.outputs.forEach {
             it.versionName.set("$hubVersion-g${gitShortHash()}")
-            it.versionCode.set(11)
+            it.versionCode.set(12)
         }
         val licence = tasks.register<LicenceText>("${variant.name}LicenceText") {
             gpl3.set(file("../../../core/deps/picotcp/LICENSE.GPLv3"))

@@ -5,13 +5,13 @@
 # Survivor 2 - Code: Veronica VR
 ### SEGA NAOMI Survival Action · Standalone Meta Quest & PC VR
 
-[![Release v1.0.10](https://img.shields.io/badge/Release-v1.0.10-805ad5?style=for-the-badge)](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.10)
+[![Release v1.0.11](https://img.shields.io/badge/Release-v1.0.11-805ad5?style=for-the-badge)](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.11)
 [![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
 [![Original game required](https://img.shields.io/badge/Your_Game-gunsur2_World_BHF2_Ver._E-orange?style=for-the-badge)](#bring-your-own-game)
 
-**[⬇️ Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.10/survivor2-code-veronica-vr-quest.apk)** · **[🖥️ PC VR ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.10/survivor2-code-veronica-vr-pcvr.zip)** · **[🎮 Controls](#controls)**
+**[⬇️ Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.11/survivor2-code-veronica-vr-quest.apk)** · **[🖥️ PC VR ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.11/survivor2-code-veronica-vr-pcvr.zip)** · **[🎮 Controls](#controls)**
 
-[Checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.10/SHA256SUMS.txt) · [All releases](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases)
+[Checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.11/SHA256SUMS.txt) · [All releases](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases)
 
 **[🌐 VR4ALL — Standalone VR Mod Installer](https://github.com/vr4all-standalone/vr4all-standalone)**
 
@@ -21,9 +21,9 @@
 
 ---
 
-## Update v1.0.10
+## Update v1.0.11
 
-New installs and Reset to defaults use World size 0.10 and a Custom Crosshair with 20% minimum, 45% maximum and a 5 m shrink distance. Existing saved settings are preserved. [Release notes](docs/releases/v1.0.10.md).
+Laser choices are Off, Normal, 5x, and 10x. Normal uses the previous 2x beam width, and saved 2x selections now show as Normal. [Release notes](docs/releases/v1.0.11.md).
 
 ## Overview
 
@@ -32,14 +32,14 @@ Standalone Quest and PC OpenXR adaptation of **Resident Evil Survivor 2 – Code
 The port uses stereoscopic head tracking, a level first-person body camera, tracked controller aiming, native analog movement and 30° snap turns. It reuses the Confidential Mission/Lupin VR menus, setup and licensed gun/controller assets. One player per app instance is supported initially.
 
 <a id="installation"></a>
-## Downloads — v1.0.10
+## Downloads — v1.0.11
 
 | Platform | Download |
 | --- | --- |
-| Meta Quest (arm64) | [Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.10/survivor2-code-veronica-vr-quest.apk) |
-| Windows x64 / PC OpenXR | [PC VR portable ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.10/survivor2-code-veronica-vr-pcvr.zip) |
+| Meta Quest (arm64) | [Quest APK](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.11/survivor2-code-veronica-vr-quest.apk) |
+| Windows x64 / PC OpenXR | [PC VR portable ZIP](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.11/survivor2-code-veronica-vr-pcvr.zip) |
 
-[Release notes and known limits](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.10) · [SHA-256 checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.10/SHA256SUMS.txt) · [Corresponding binary source](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/tree/v1.0.10)
+[Release notes and known limits](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/tag/v1.0.11) · [SHA-256 checksums](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/releases/download/v1.0.11/SHA256SUMS.txt) · [Corresponding binary source](https://github.com/vr4all-standalone/survivor2-code-veronica-vr/tree/v1.0.11)
 
 Both downloads are built from the exact source commit identified by the release tag and the APK version suffix. `main` may include later documentation. The Quest APK uses the project's release signer and package `com.vrlightgunhub.survivor2`. No game or BIOS is included.
 

@@ -491,7 +491,8 @@ void drawGunGlow(const glm::mat4& viewProj, const glm::vec3& eyePos, const GunVi
 		{
 			const glm::vec3 fwd = dir / len;
 			glm::vec3 side = glm::cross(fwd, eyePos - muzzle);
-			const float halfWidth = vr::laser::halfWidth(gun.menuPointer ? 1 : int(config::VrLaserWidth));
+			const float halfWidth = (gun.menuPointer || gun.servicePointer)
+					? vr::laser::PointerHalfWidth : vr::laser::halfWidth(config::VrLaserWidth);
 			side = glm::length(side) < 1e-6f ? glm::vec3(halfWidth, 0, 0) : glm::normalize(side) * halfWidth;
 			// fades out along the way: it guides without painting over the scene
 			const glm::vec3 colour = gun.menuPointer ? theme::Accent : gun.player == 1 ? glm::vec3(0.15f, 0.45f, 1.f) : glm::vec3(1.f, 0.08f, 0.05f);
