@@ -6,6 +6,9 @@
 #include <sstream>
 #include <locale>
 namespace vr::reticle {
+inline constexpr float DefaultMinimum = .20f;
+inline constexpr float DefaultMaximum = .45f;
+inline constexpr float DefaultShrinkDistance = 5.f;
 inline float savedFloat(const char* key,float fallback) {
  const std::string text=config::loadStr("config",key,"");
  std::istringstream input(text);input.imbue(std::locale::classic());float value;
@@ -15,9 +18,9 @@ inline float savedFloat(const char* key,float fallback) {
 inline int mode(int value) { return value == 2 ? 2 : 1; }
 inline int nextMode(int value,int) { return mode(value) == 1 ? 2 : 1; }
 inline const char* modeLabel(int value) { return mode(value) == 2 ? "None" : "Custom"; }
-inline float minimum(float value) { return std::isfinite(value) ? std::clamp(value,.05f,1.f) : .25f; }
-inline float maximum(float value) { return std::isfinite(value) ? std::clamp(value,.25f,3.f) : 1.f; }
-inline float distance(float value,float fallback=6.f) { return std::isfinite(value) ? std::clamp(value,.2f,20.f) : std::clamp(fallback,.2f,20.f); }
+inline float minimum(float value) { return std::isfinite(value) ? std::clamp(value,.05f,1.f) : DefaultMinimum; }
+inline float maximum(float value) { return std::isfinite(value) ? std::clamp(value,.25f,3.f) : DefaultMaximum; }
+inline float distance(float value,float fallback=DefaultShrinkDistance) { return std::isfinite(value) ? std::clamp(value,.2f,20.f) : std::clamp(fallback,.2f,20.f); }
 // Size changes only the artwork offsets. The real world hit never moves.
 inline double sizeReference(double target,double panel,float minSize,float shrink,float maxSize=1.f) {
  if(!std::isfinite(panel)||panel<=0)return 0;
@@ -34,25 +37,25 @@ public:ModeSetting():OptionType("vr.ReticleMode",1){} using OptionType::operator
  }
 };
 template<class OptionType> class MinimumSetting : public OptionType {
-public:MinimumSetting():OptionType("vr.ReticleMinSize",.25f){} using OptionType::operator=;
+public:MinimumSetting():OptionType("vr.ReticleMinSize",DefaultMinimum){} using OptionType::operator=;
  void load() override {
-  OptionType::load();const float value=savedFloat("vr.ReticleMinSize",.25f);
-  this->set(value>=.05f&&value<=1.f?value:.25f);
+  OptionType::load();const float value=savedFloat("vr.ReticleMinSize",DefaultMinimum);
+  this->set(value>=.05f&&value<=1.f?value:DefaultMinimum);
  }
 };
 template<class OptionType> class MaximumSetting : public OptionType {
-public:MaximumSetting():OptionType("vr.ReticleMaxSize",1.f){} using OptionType::operator=;
+public:MaximumSetting():OptionType("vr.ReticleMaxSize",DefaultMaximum){} using OptionType::operator=;
  void load() override {
-  OptionType::load();const float value=savedFloat("vr.ReticleMaxSize",1.f);
-  this->set(value>=.25f&&value<=3.f?value:1.f);
+  OptionType::load();const float value=savedFloat("vr.ReticleMaxSize",DefaultMaximum);
+  this->set(value>=.25f&&value<=3.f?value:DefaultMaximum);
  }
 };
 template<class OptionType> class DistanceSetting : public OptionType {
-public:DistanceSetting():OptionType("vr.ReticleShrinkDistance",6.f){} using OptionType::operator=;
+public:DistanceSetting():OptionType("vr.ReticleShrinkDistance",DefaultShrinkDistance){} using OptionType::operator=;
  void load() override {
-  OptionType::load();const float value=savedFloat("vr.ReticleShrinkDistance",6.f);
-  // Custom/None adapters always start at6m; retain valid explicit tuning.
-  this->set(value>=.2f&&value<=20.f?value:6.f);
+  OptionType::load();const float value=savedFloat("vr.ReticleShrinkDistance",DefaultShrinkDistance);
+  // Use the captured Survivor 2 default when an explicit value is unavailable.
+  this->set(value>=.2f&&value<=20.f?value:DefaultShrinkDistance);
  }
 };
 }

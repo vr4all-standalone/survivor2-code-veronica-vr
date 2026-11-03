@@ -43,7 +43,7 @@ def main():
   choose+='std::string reticleValue(int row){char s[32];switch(row){'+menu[start:end]+'default:return "";}}\n'
   choose+=block(menu,'bool stepper(')+'\n'+block(menu,'bool repeats(')
  policy=('#include "world_scale_settings.h"\n' if (ROOT/'core/rend/vr/world_scale_settings.h').exists() else '')+('#include "reticle_settings.h"\n' if has else '')
- (OUT/'under_test.inc').write_text('\n'.join((trim,ini_header,ini,'#include "cfg/cfg.h"',cfg,policy,code,enum,labels,choose)))
+ (OUT/'under_test.inc').write_text('\n'.join((trim,ini_header,ini,'#include "cfg/cfg.h"',cfg,policy,code,enum,labels,line(menu,r'^enum ExtraRow[^\n]+'),choose)))
  env=dict(os.environ);env['PATH']='D:/msys64/mingw64/bin;'+env.get('PATH','')
  binary=OUT/'reticle-settings-test.exe'
  subprocess.run(['D:/msys64/mingw64/bin/g++.exe','-std=c++17','-O2','-I'+str(OUT),'-I'+str(ROOT/'core'),'-I'+str(ROOT/'core/rend/vr'),str(HERE/'reticle-settings-test.cpp'),'-o',str(binary)],check=True,env=env)
