@@ -213,7 +213,8 @@ void onStart()
 	// a new game: whatever model the renderer has is another game's
 	newModel = true;
 	const Source *source = gameModelSource();
-	if (source == nullptr || !config::VrGameHands)
+	if (source == nullptr || (!config::VrGameHands
+			&& !(source->kind == Source::SurvivorGuns && xr::enabled())))
 		return;
 	cmRun = source->kind == Source::CmGuns;
 	lupinRun = source->kind == Source::LupinGun;
@@ -234,7 +235,7 @@ void onStart()
 			cached[i] = loadSurvivorGunCache(get_writable_data_path(gun.file), gun.id);
 		}
 		const bool allCached = std::all_of(cached.begin(), cached.end(), [](bool v) { return v; });
-		const bool allowed = allCached || ((xr::enabled() && !xr::sim::active()) || config::VrHandsPrep);
+		const bool allowed = allCached || (xr::enabled() || config::VrHandsPrep);
 		survivorPreparation.begin(allowed, cached, xr::enabled());
 		survivorReady = survivorPreparation.phase == SurvivorPreparation::Phase::Ready && allCached;
 		progress = survivorPreparation.progress();
@@ -325,7 +326,7 @@ void onVBlank()
 		return;
 	if (survivorRun)
 	{
-		const bool made = survivorPreparation.tick(skipRequested.load(),
+		const bool made = survivorPreparation.tick(!xr::enabled() && skipRequested.load(),
 			[](size_t index, std::string& error) {
 				const auto& gun = survivorGuns()[index];
 				std::vector<uint8_t> bytes;
@@ -361,7 +362,7 @@ void onVBlank()
 				stopPrep("native weapons skipped for this session", Off);
 			else
 			{
-				WARN_LOG(RENDERER, "VR hands: native weapons unavailable: %s (Arcade gun this session)", survivorPreparation.error.c_str());
+				WARN_LOG(RENDERER, "VR hands: native weapons unavailable: %s", survivorPreparation.error.c_str());
 				stopPrep("native weapons unavailable", Off);
 			}
 		}
@@ -1004,6 +1005,8 @@ bool preparing() {
 }
 
 bool survivorModelsReady() { return survivorReady.load(); }
+
+bool survivorPrepRequired() { return xr::enabled() && survivorRun && !survivorReady; }
 
 float prepProgress() {
 	return progress;

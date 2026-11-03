@@ -71,6 +71,7 @@ void observePass(const rend_context& ctx, const RenderPass& pass, const RenderPa
 bool takeNewModel();
 // All eight strict caches are ready for this session; skipped/failed preparation stays fallback.
 bool survivorModelsReady();
+bool survivorPrepRequired();
 
 // The game is being run to the scene: no player input, a panel instead of the game.
 bool preparing();

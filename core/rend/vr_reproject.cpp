@@ -6,6 +6,7 @@
 #include "vr_reproject.h"
 #include "vr/xr_host.h"
 #include "vr/survivor_native.h"
+#include "vr/survivor_view.h"
 #include "vr/survivor_model.h"
 #include "vr/hands_rip.h"
 #include "transform_matrix.h"
@@ -778,8 +779,11 @@ static std::atomic<bool> startInputReady { false };
 static std::atomic<u8> vmPlayers { 0 };
 static std::atomic<bool> vmPlayersKnown { false };
 
+static bool activeLargeView = false; // captured only when the actual game view starts
+
 static void applyGameProfile(Event, void *)
 {
+	activeLargeView = false;
 	confirmedPlayers = 0;
 	startInputReady = false;
 	std::fill(std::begin(fovLiterals), std::end(fovLiterals), 0u);
@@ -850,6 +854,7 @@ static void applyGameProfile(Event, void *)
 		}
 		NOTICE_LOG(RENDERER, "VR: camera profile for %s", prof.gameId);
 	}
+	activeLargeView = activeProfile != nullptr && !survivor::game() && config::VrFovScale > 1.f;
 }
 
 static struct GameProfileRegistration
@@ -2708,6 +2713,18 @@ void dropShotMarker(rend_context& ctx, const RenderPass& pass, const RenderPass&
 	}
 }
 
+float hudScaleForPolygon(const PolyParam& polygon,float scale,bool tileClipped)
+{
+    // Existing native tile clips are expressed in eye raster space. Preserve these
+    // polygons at100 rather than enlarge into an unmoved clip rectangle.
+    if(tileClipped)return 1.f;
+    if(activeProfile==nullptr||!polygon.pcw.Texture)return scale;
+    const u32 tex=polygon.tcw.TexAddr<<3;
+    for(u32 sight:activeProfile->sightTextures)if(sight!=0&&sight==tex)return 1.f;
+    for(u32 marker:markerTextures)if(marker!=0&&marker==tex)return 1.f;
+    return scale;
+}
+
 const ReprojectParams& update(const rend_context& ctx)
 {
 	int dcWidth, dcHeight;
@@ -2715,6 +2732,8 @@ const ReprojectParams& update(const rend_context& ctx)
 	const glm::vec2 halfSize(dcWidth * 0.5f, dcHeight * 0.5f);
 	const bool active = config::VrReproject && !ctx.isRTT;
 	params.comfort = glm::vec3(0.f);
+	params.hudSize = 1.f; // reset every pass and eye, including RTT and inactive views
+	params.survivorRasterMask = 0;
 
 	const float zMax = ctx.fZ_max > 0.f && std::isfinite(ctx.fZ_max) ? ctx.fZ_max : 1.f;
 	const float zNear = NearFraction / zMax;
@@ -2729,6 +2748,9 @@ const ReprojectParams& update(const rend_context& ctx)
 
 	// The game may run with a widened view: rebuild with its live focal length, but
 	// present with the stock one so the framing and HUD size stay as designed.
+	params.hudSize = hud::effective(config::VrHudSize,activeLargeView,
+        playerInGame(0)||playerInGame(1),xr::serviceMenuActive(),
+        hud::native3DFrame(ctx,(float)config::VrHudW));
 	const glm::vec2 gameFocal = readGameFocal();
 	const glm::vec2 stockTan = halfSize / (float)config::VrFocal;
 	params.tanHalf = halfSize / gameFocal;
@@ -2741,6 +2763,13 @@ const ReprojectParams& update(const rend_context& ctx)
 	if (const xr::Eye *eye = xr::currentEye())
 	{
 		// In the headset: game camera at the player's head, viewed through this eye.
+        if (survivor::game() && survivor::inRound() && !xr::serviceMenuActive())
+        {
+            const bool gameplay = survivor::view::gameplay(true, false, hud::native3DFrame(ctx, config::VrHudW));
+            const int mode = survivor::view::mode(config::VrWidenMode);
+            params.survivorRasterMask = survivor::view::rasterMask(mode, gameplay);
+            if (gameplay && mode != 0) params.hudSize = hud::size(config::VrHudSize);
+        }
 		params.viewProj = eye->viewProj;
 		params.comfort = comfortParams();
 		return params;

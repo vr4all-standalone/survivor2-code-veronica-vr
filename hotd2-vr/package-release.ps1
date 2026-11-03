@@ -51,8 +51,8 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 # The app: its application ID, label and version (shell\android-studio\flycast\build.gradle.kts and
 # src\vr\AndroidManifest.xml), its library entry, and the PC zip's start script (hotd2-vr\assets).
 $appId = 'com.vrlightgunhub.survivor2'
-$appLabel = 'Survivor 2 - Code: Veronica VR'
-$appVersion = '1.0.6'
+$appLabel = 'Survivor 2 - Code: Veronica - VR4ALL'
+$appVersion = '1.0.9'
 $appLauncher = 'com.flycast.emulator.Survivor2StartActivity'
 $playCmd = 'Play Survivor 2.cmd'
 
@@ -223,7 +223,7 @@ function Find-AppIdentityFault([string[]]$badgingLines, [string[]]$manifestTree,
     $badging = $badgingLines | Where-Object { $_ -match '^package:' } | Select-Object -First 1
     $wantVersion = [regex]::Escape("$appVersion-g") + $(if ($testBuild) { '[0-9a-f]+' } else { [regex]::Escape($shortHash) })
     if ($badging -notmatch "^package: name='$([regex]::Escape($appId))'") { "the package is not $appId" }
-    if ($badging -notmatch "versionCode='7'") { 'the versionCode is not 7' }
+    if ($badging -notmatch "versionCode='10'") { 'the versionCode is not 10' }
     if ($badging -notmatch "versionName='$wantVersion'") {
         "the versionName is not $appVersion-g$(if ($testBuild) { '<commit>' } else { $shortHash })"
     }
@@ -422,7 +422,7 @@ rend.NativeDepthInterpolation = yes
 vr.Xr = yes
 '@
 $readme = @'
-Survivor 2 - Code: Veronica VR, PC version 1.0.6
+Survivor 2 - Code: Veronica - VR4ALL, PC version 1.0.9
 Resident Evil Survivor 2 - Code: Veronica (NAOMI World BHF2 Ver. E)
 
 Free roaming with tracked aiming and stereoscopic head tracking. One player per app
@@ -443,22 +443,20 @@ Controls: left stick moves/strafe (up/down also selects native menus), right sti
 snap turns 30 degrees. Either fresh trigger takes and fires the solo gun. A/X adds
 credit and starts/accepts. B/Y is the native gun button / action, not manual reload.
 Reload follows the native game. Left Menu pauses and opens VR settings. Left stick
-click recenters; right stick click toggles the laser. Focus loss and menus release
+click recenters; right stick click toggles the laser and crosshair. Focus loss and menus release
 inputs; held controls must be released before gameplay resumes.
 
-The common 13-row menu contains Resume, Recenter, Gun, Gun angle, Reload, Two players,
-Laser, Haptics, World size, Panel distance, Wider view, How to play, Quit.
-Reload displays Native automatic; Two players displays Single player; Wider view is
-Unavailable. These three entries cannot be changed. Haptics offers Off/Light/Medium/Strong.
-Gun -> In-game weapons follows native swaps: BR-93R, Python, Gold Luger, Ingram,
-SPAS-12, AK47S, M79 and LN-02. First launch prepares complete weapon models from your
-cartridge; B/Y skips preparation for that session. Explicit custom GLBs override the
-automatic model. Arcade and Zapper remain available. No extracted game models are
-included in this download. Accepted native rounds drive shot feedback.
+Gun, World, System and In-game tabs group VR controls. The In-game tab opens
+the original Namco Service menu. Right stick click toggles laser and crosshair.
+Wider view Off clips to the original raster, On shows submitted scenery and
+Fade darkens scenery outside the raster. HUD sizing applies in On and Fade.
+First VR launch requires native weapon preparation from your World cartridge.
+A complete existing cache is reused. Arcade, Zapper and custom GLBs remain
+available after setup. No extracted weapon models are included.
 Native auto-aim camera tilt is replaced by a level body view in active VR play; the
 local avatar visual is hidden, while other actors and native gameplay remain active.
 Turning your head beyond the game's rendered field of view reveals undrawn space.
-No wider-view patch is enabled. See the source validation notes for measured limits.
+Wider view uses the geometry the original game submits. See the source validation notes for measured limits.
 
 No game or BIOS is included. Unofficial fan project, not affiliated with Capcom or Sega.
 

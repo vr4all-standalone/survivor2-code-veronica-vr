@@ -69,23 +69,23 @@ const Words Kinds[] {
 const Words KindsSurvivor[] {
 	{ "/interaction_profiles/oculus/touch_controller", {
 		{ { controllers::Y, "Y - Gun button" }, { controllers::X, "X - Start" }, { controllers::Menu, "Menu" },
-			{ controllers::Trigger, "Trigger - Shoot" }, { controllers::Stick, "Move; click - Recenter" } },
-		{ { controllers::B, "B - Gun button" }, { controllers::A, "A - Start" }, { controllers::Trigger, "Trigger - Shoot" },
-			{ controllers::Stick, "Snap turn; click - Laser" } } } },
+			{ controllers::Trigger, "Trigger - Fire" }, { controllers::Stick, "Move; click - Recenter" } },
+		{ { controllers::B, "B - Gun button" }, { controllers::A, "A - Start" }, { controllers::Trigger, "Trigger - Fire" },
+			{ controllers::Stick, "Snap turn; click - Laser/crosshair" } } } },
 	{ "/interaction_profiles/valve/index_controller", {
 		{ { controllers::Y, "B - Gun button" }, { controllers::X, "A - Start" }, { controllers::Menu, "Pad squeeze - Menu" },
-			{ controllers::Trigger, "Trigger - Shoot" }, { controllers::Stick, "Move; click - Recenter" } },
-		{ { controllers::B, "B - Gun button" }, { controllers::A, "A - Start" }, { controllers::Trigger, "Trigger - Shoot" },
-			{ controllers::Stick, "Snap turn; click - Laser" } } } },
+			{ controllers::Trigger, "Trigger - Fire" }, { controllers::Stick, "Move; click - Recenter" } },
+		{ { controllers::B, "B - Gun button" }, { controllers::A, "A - Start" }, { controllers::Trigger, "Trigger - Fire" },
+			{ controllers::Stick, "Snap turn; click - Laser/crosshair" } } } },
 	{ "/interaction_profiles/htc/vive_controller", {
 		{ { controllers::Y, "Pad click - Gun button" }, { controllers::X, "Menu - Start (hold: Menu)" },
-			{ controllers::Trigger, "Trigger - Shoot" } },
-		{ { controllers::B, "Pad click - Gun button" }, { controllers::A, "Menu - Start" }, { controllers::Trigger, "Trigger - Shoot" } } } },
+			{ controllers::Trigger, "Trigger - Fire" } },
+		{ { controllers::B, "Pad click - Gun button" }, { controllers::A, "Menu - Start" }, { controllers::Trigger, "Trigger - Fire" } } } },
 	{ "/interaction_profiles/microsoft/motion_controller", {
 		{ { controllers::Y, "Pad click - Gun button" }, { controllers::X, "Menu - Start (hold: Menu)" },
-			{ controllers::Trigger, "Trigger - Shoot" }, { controllers::Stick, "Move; click - Recenter" } },
-		{ { controllers::B, "Pad click - Gun button" }, { controllers::A, "Menu - Start" }, { controllers::Trigger, "Trigger - Shoot" },
-			{ controllers::Stick, "Snap turn; click - Laser" } } } },
+			{ controllers::Trigger, "Trigger - Fire" }, { controllers::Stick, "Move; click - Recenter" } },
+		{ { controllers::B, "Pad click - Gun button" }, { controllers::A, "Menu - Start" }, { controllers::Trigger, "Trigger - Fire" },
+			{ controllers::Stick, "Snap turn; click - Laser/crosshair" } } } },
 };
 // the two-player P1-left layout: each hand's buttons its own player's, P1 on the left and P2 on the right (the same
 // buttons and order as Kinds)
@@ -231,6 +231,9 @@ void layOut(Layout& layout, int hand, const glm::mat4& grip, const Words& words,
 	float outer = 0.f;
 	for (const glm::vec3& p : at)
 		outer = std::max(outer, side * planeX(p));
+	float inner = 0.f;
+	for (const glm::vec3& point : at)
+		inner = std::max(inner, -side * planeX(point));
 	const float columnX = side * (outer + Gap);
 
 	const bool stacked = std::any_of(list.begin(), list.end(), [](const Label& l) { return l.button == controllers::Stick; });
@@ -268,20 +271,21 @@ void layOut(Layout& layout, int hand, const glm::mat4& grip, const Words& words,
 	};
 	for (size_t k = 0; k < column.size(); k++)
 		place(column[k], columnX, ys[k], side, room(columnX, ys[k]));
-	float stickX = 0.f, stickY = 0.f;
 	for (size_t i = 0; i < list.size(); i++)
 		if (list[i].button == controllers::Stick)
 		{
 			const float x = planeX(at[i]);
 			const float y = std::max(planeY(at[i]), ys.empty() ? -1.f : ys.front()) + StickRise;
 			place(i, x, y, 0.f, room(x, y - Height * 0.5f));
-			stickX = x;
-			stickY = y;
 		}
 	if (stacked)
 		for (size_t i = 0; i < list.size(); i++)
 			if (list[i].button == controllers::Trigger)
-				place(i, stickX, stickY + Pitch, 0.f, glm::vec3(0.f), true);
+				{
+                    const float x = -side * (inner + .037f);
+                    const float y = planeY(at[i]);
+                    place(i, x, y, -side, room(x, y));
+                }
 }
 
 // A quad facing `eye` at `centre`, its top towards the room's up.

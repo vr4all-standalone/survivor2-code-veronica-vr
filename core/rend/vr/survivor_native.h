@@ -6,6 +6,7 @@ namespace vr {struct GunState;}
 namespace vr::survivor {
 bool game();
 bool ready();
+bool inRound();
 void neutral();
 void publishAim(Vec origin,Vec forward);
 void requestTurn(int direction);

@@ -237,6 +237,7 @@ glm::mat4 controllerAim[2];		// (the aim pose: the player's own controller model
 // labels while the menu is open; the menu closing, however it closes, gives back what they held. As
 // last logged (noteHolds): heldWas, labelsWere. p1StartWas: player 1's Start's last state, for its press.
 bool p1Armed, menuHowToPlay;
+bool survivorStartChosen;
 Holds heldWas[2] { Holds::Controller, Holds::Controller };
 bool labelsWere = true;
 bool p1StartWas;
@@ -408,7 +409,7 @@ bool initActions()
 			|| !createAction(skipAction, "skip", "Reload (the gun's B)", XR_ACTION_TYPE_BOOLEAN_INPUT, true)
 			|| !createAction(menuAction, "menu", "Settings menu", XR_ACTION_TYPE_BOOLEAN_INPUT)
 			|| !createAction(recenterAction, "recenter", "Recenter", XR_ACTION_TYPE_BOOLEAN_INPUT)
-			|| !createAction(laserAction, "laser", "Laser on/off", XR_ACTION_TYPE_BOOLEAN_INPUT)
+			|| !createAction(laserAction, "laser", "Laser and crosshair on/off", XR_ACTION_TYPE_BOOLEAN_INPUT)
 			|| !createAction(hapticAction, "recoil", "Recoil", XR_ACTION_TYPE_VIBRATION_OUTPUT, true)
 			|| !createAction(stickAction, "stick", "Menus (D-pad), world size", XR_ACTION_TYPE_VECTOR2F_INPUT, true)
 			|| !createAction(gripAction, "grip", "Rack the slide; hold for world size", XR_ACTION_TYPE_FLOAT_INPUT, true))
@@ -1682,8 +1683,11 @@ void updateGun(Gun& g, XrTime time, const XrSpaceLocation *locations, const bool
 		view.shot = g.shotCount;
 		view.player = g.player;
 		view.menuPointer = false;
+		view.servicePointer = serviceControls.active;
+		view.reticleHead = headPose();
+		view.reticlePanelDistance = (float)config::VrHudDepth * s;
 		view.aimLine = config::VrLaser;
-		view.aimDot = config::VrLaser && (onScreen || aimOutside);
+		view.aimDot = (!serviceControls.active || config::VrLaser) && (onScreen || aimOutside);
 		view.aimOutside = aimOutside && !onScreen;
 		view.aimPoint = o + d * (dist > 0.f ? dist * s : 5.f);
 		// (a hand that holds its controller shows that instead: before play, the menu's How to play)
@@ -1959,10 +1963,12 @@ void updateMenu(XrTime time, bool menuEdge, bool skip, bool skipEdge)
 	static int stickWas;	// 0 at rest, 1 up, 2 down, 3 left, 4 right: pushed past 60%, let go below 40%
 	static XrTime repeatAt;	// held left or right: when it steps again (menu::Input::repeat)
 	menu::Input input {};
-	const bool a = boolAction(startAction, Right);
+	const int activeHand = menu::pointerHand();
+	const int inputHand = activeHand < 0 ? Right : activeHand;
+	const bool a = boolAction(startAction, inputHand);
 	input.select = a && !aWas;
 	aWas = a;
-	const glm::vec2 stick = stickAction2();
+	const glm::vec2 stick = stickAction2(inputHand);
 	int push = 0;
 	if (stickWas != 0 && glm::length(stick) >= 0.4f)
 		push = stickWas;
@@ -2026,7 +2032,8 @@ void updateMenu(XrTime time, bool menuEdge, bool skip, bool skipEdge)
 	for (int hand : { Left, Right })
 	{
 		const menu::Input::Ray& ray = input.ray[hand];
-		if (!ray.valid)
+		if (Gun* gun = gunInHand(hand)) gun->view.aimLine = gun->view.aimDot = false;
+		if (!ray.valid || hand != menu::pointerHand())
 			continue;
 		glm::vec3 at;
 		const bool onPanel = menu::pointer(hand, at);
@@ -2092,7 +2099,18 @@ void sampleStartButtons(XrTime time, bool leftDown, bool rightDown, bool ready,
     if (!config::VrXrGun || config::GGPOEnable) serviceControls.reset();
     const bool left = startRelease.sample(Left, leftDown, ready && allowed);
     const bool right = startRelease.sample(Right, rightDown, ready && allowed);
-    playerStartButtons(left, right, p1Start, p2Start);
+    if (vr::survivor::game())
+    {
+        if (!survivorStartChosen && (left || right) && !serviceControls.active && !serviceControls.pending)
+        {
+            guns[0].hand = right ? Right : Left;
+            survivorStartChosen = true;
+        }
+        p1Start = left || right;
+        p2Start = false;
+    }
+    else
+        playerStartButtons(left, right, p1Start, p2Start);
     const bool wasPending = serviceControls.pending;
     const bool wasHeld[2]{serviceControls.held[Left], serviceControls.held[Right]};
     serviceControls.update(time, leftDown, rightDown, allowed);
@@ -2141,7 +2159,7 @@ void updateLightgun(XrTime time, bool headTracked)
 		slide.held = false;
 		p2StartWas = true;	// a Start of player 2's still held doesn't join at once
 		// controllers in both hands again, with the labels (a How to play left on ends, with its line)
-		p1Armed = false;
+		p1Armed = survivorStartChosen = false;
 		setHowToPlay(false, "new game");
 		noteHolds("new game");
 	}
@@ -2221,16 +2239,17 @@ void updateLightgun(XrTime time, bool headTracked)
 	const bool rightStart = boolAction(startAction, Right) && !startSwallow;
 	bool p1Start, p2Start;
     sampleStartButtons(time, leftStart, rightStart, gameStartReady(),
-            config::VrXrGun && focused && !preparing && !menuOpen && !menuEdge && !startSwallow, p1Start, p2Start);
+            config::VrXrGun && focused && !preparing && !hands::survivorPrepRequired() && !menuOpen && !menuEdge && !startSwallow, p1Start, p2Start);
 	const bool skip = boolAction(skipAction);
 	const bool skipEdge = skip && !skipWas;
 	skipWas = skip;
 	if (!skip) skipSwallow = false;
-	if (preparing)
+	if (preparing || hands::survivorPrepRequired())
 	{
-		preparationActionsSampled = true;
+		if (hands::survivorPrepRequired()) vr::survivor::neutral();
+		preparationActionsSampled = preparing;
 		// B (or Y): not now, the arcade gun this time (the menu button does nothing now)
-		if (skip)
+		if (skip && !hands::survivorPrepRequired())
 			hands::skipPrep();
 		if (menuEdge)
 		{
@@ -2294,10 +2313,15 @@ void updateLightgun(XrTime time, bool headTracked)
 	const bool laser = boolAction(laserAction);
 	if (laser && !laserWas)
 	{
-		config::VrLaser.set(!config::VrLaser);
+		const bool enabled = !(config::VrLaser || config::VrReticleMode != 2);
+		config::VrLaser.set(enabled);
+		config::VrReticleMode.set(enabled ? 1 : 2);
+		config::setAutoSave(false);
 		config::saveBool("config", "vr.Laser", config::VrLaser);
+		config::saveInt("config", "vr.ReticleMode", config::VrReticleMode);
+		config::setAutoSave(true);
 		haptic(Right, 0.03f, 0.4f);
-		NOTICE_LOG(INPUT, "XR: laser %s", config::VrLaser ? "on" : "off");
+		NOTICE_LOG(INPUT, "XR: laser and crosshair %s", config::VrLaser ? "on" : "off");
 	}
 	laserWas = laser;
 	const glm::vec2 stick = stickAction2();
@@ -2825,6 +2849,11 @@ bool serviceMenuAvailable()
     return config::VrXrGun && !config::GGPOEnable && gameStartLoaded();
 }
 
+bool serviceMenuActive()
+{
+    return serviceControls.active || serviceControls.pending;
+}
+
 bool serviceMenuExitAvailable()
 {
     return serviceControls.active && serviceStyle(settings.content.gameId)!=ServiceStyle::Naomi;
@@ -3166,7 +3195,15 @@ bool frame()
 			{ survivorGuns ? "Only this once" : lupinGun ? "Watching the attract demo, only this once" : "About a minute or two, only this once", 0.047f, muted },
 		};
 		panel.progress = hands::prepProgress();
-		panel.footer = "B: skip (the Arcade gun this time)";
+		panel.footer = survivorGuns ? "Please wait for weapon setup to finish." : "B: skip (the Arcade gun this time)";
+	}
+	else if (survivorGuns && hands::survivorPrepRequired())
+	{
+		panel.lines = {
+			{ title, 0.085f, violet },
+			{ "Weapon setup could not finish", 0.064f, cream },
+			{ "Check your game files and available storage, then restart.", 0.047f, muted },
+		};
 	}
 	else if (std::chrono::steady_clock::now() < doneUntil && gunModels)
 		panel.lines = {

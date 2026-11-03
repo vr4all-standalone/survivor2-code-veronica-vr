@@ -94,6 +94,7 @@ uniform highp mat4 vrMat;
 uniform highp vec2 vrTan;
 uniform highp vec4 vrOverlay;
 uniform highp vec3 vrComfort;
+uniform highp float vrHudSize;
 #endif
 
 /* Vertex input */
@@ -105,6 +106,9 @@ in highp vec2 in_uv;
 INTERPOLATION out highp vec4 vtx_base;
 INTERPOLATION out highp vec4 vtx_offs;
 out highp vec3 vtx_uv;
+#if VR_REPROJECT == 1 && DIV_POS_Z == 1
+out highp vec4 vtx_survivorRaster;
+#endif
 
 void main()
 {
@@ -132,6 +136,7 @@ void main()
 		vpos.z = 0.0;
 	#endif
 	#if VR_REPROJECT == 1 && DIV_POS_Z == 1
+		vtx_survivorRaster = vec4(0.0);
 		// vpos is (ndc.x * W, ndc.y * W, W, W): lift it back to the game's eye space
 		// and view it from the VR camera. Depth keeps using the original W (vtx_uv.z).
 		if (abs(vpos.w - vrOverlay.w) < 0.002)
@@ -141,11 +146,12 @@ void main()
 			// vr::dropShotMarker at TA parse time.)
 			{
 				highp vec2 ndc = vpos.xy / vpos.w;
-				vpos = vrMat * vec4(ndc * vrOverlay.xy * vrOverlay.z, -vrOverlay.z, 1.0);
+				vpos = vrMat * vec4(ndc * vrOverlay.xy * vrOverlay.z * vrHudSize, -vrOverlay.z, 1.0);
 			}
 		}
 		else
 		{
+			vtx_survivorRaster = vec4(vpos.xy, vpos.w, 1.0);
 			highp vec3 p = vec3(vpos.xy * vrTan, -vpos.w);
 			// Comfort: what comes closer than vrComfort.y metres in front of you (a zombie in
 			// your face) is pulled back along the line of sight, smoothly, to no closer than
@@ -197,6 +203,10 @@ uniform lowp vec4 ditherDivisor;
 INTERPOLATION in highp vec4 vtx_base;
 INTERPOLATION in highp vec4 vtx_offs;
 in highp vec3 vtx_uv;
+#if VR_REPROJECT == 1 && DIV_POS_Z == 1
+uniform highp int vrSurvivorRasterMask;
+in highp vec4 vtx_survivorRaster;
+#endif
 
 lowp float fog_mode2(highp float w)
 {
@@ -412,6 +422,16 @@ void main()
 	mediump vec4 dv = vec4(r, r, r, 1.) / ditherDivisor;
 	color = clamp(floor(color * 255. + dv) / 255., 0., 1.);
 #endif
+#endif
+#if VR_REPROJECT == 1 && DIV_POS_Z == 1
+    if (vrSurvivorRasterMask != 0 && vtx_survivorRaster.w > 0.5)
+    {
+        if (vtx_survivorRaster.z <= 0.0) discard;
+        highp vec2 ndc = vtx_survivorRaster.xy / vtx_survivorRaster.z;
+        highp vec2 outside = max(abs(ndc) - vec2(1.0), vec2(0.0));
+        if (vrSurvivorRasterMask == 2 && max(outside.x, outside.y) > 0.0) discard;
+        color.rgb *= 1.0 - smoothstep(0.0, 0.5, length(outside));
+    }
 #endif
 	gl_FragColor = color;
 }
@@ -835,6 +855,7 @@ public:
 		addConstant("pp_TriLinear", s->trilinear);
 		addConstant("pp_Palette", s->palette);
 		addConstant("DIV_POS_Z", s->divPosZ);
+		addConstant("VR_REPROJECT", s->divPosZ && config::VrReproject && !s->naomi2);
 		addConstant("DITHERING", s->dithering);
 
 		addSource(PixelCompatShader);
@@ -908,6 +929,8 @@ bool CompilePipelineShader(PipelineShader* s)
 	s->vrTan = glGetUniformLocation(s->program, "vrTan");
 	s->vrOverlay = glGetUniformLocation(s->program, "vrOverlay");
 	s->vrComfort = glGetUniformLocation(s->program, "vrComfort");
+	s->vrHudSize = glGetUniformLocation(s->program, "vrHudSize");
+	s->vrSurvivorRasterMask = glGetUniformLocation(s->program, "vrSurvivorRasterMask");
 	s->ditherDivisor = glGetUniformLocation(s->program, "ditherDivisor");
 	s->texSize = glGetUniformLocation(s->program, "texSize");
 
@@ -938,6 +961,7 @@ static void create_modvol_shader()
 	gl.modvol_shader.vrTan = glGetUniformLocation(gl.modvol_shader.program, "vrTan");
 	gl.modvol_shader.vrOverlay = glGetUniformLocation(gl.modvol_shader.program, "vrOverlay");
 	gl.modvol_shader.vrComfort = glGetUniformLocation(gl.modvol_shader.program, "vrComfort");
+	gl.modvol_shader.vrHudSize = glGetUniformLocation(gl.modvol_shader.program, "vrHudSize");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
@@ -1216,6 +1240,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		ShaderUniforms.vrTan = vrParams.tanHalf;
 		ShaderUniforms.vrOverlay = vrParams.overlay;
 		ShaderUniforms.vrComfort = vrParams.comfort;
+		ShaderUniforms.vrHudSize = vrParams.hudSize;
+		ShaderUniforms.vrSurvivorRasterMask = vrParams.survivorRasterMask;
 	}
 
 	ShaderUniforms.depth_coefs[0] = 2.f / vtx_max_fZ;
@@ -1246,6 +1272,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 			glUniform2fv(gl.modvol_shader.vrTan, 1, &ShaderUniforms.vrTan[0]);
 		if (gl.modvol_shader.vrOverlay != -1)
 			glUniform4fv(gl.modvol_shader.vrOverlay, 1, &ShaderUniforms.vrOverlay[0]);
+		if (gl.modvol_shader.vrHudSize != -1)
+            glUniform1f(gl.modvol_shader.vrHudSize,1.f);
 		if (gl.modvol_shader.vrComfort != -1)
 			glUniform3fv(gl.modvol_shader.vrComfort, 1, &ShaderUniforms.vrComfort[0]);
 		glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);

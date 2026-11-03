@@ -24,7 +24,8 @@ namespace {
  Aim aim;
  vr::GunState state{};
  uint16_t shots=0;
- bool logged=false,activePhase=false;
+ bool logged=false;
+ std::atomic<bool> activePhase{false};
  constexpr uint32_t Player=0x8c3d5ce0,Context=0x8c2b4c9c;
  bool signature(){return nativeSignature([](uint32_t offset){return ReadMem16_nommu(0x8c000000+offset);});}
  float readFloat(uint32_t a){const uint32_t bits=ReadMem32_nommu(a);float f;std::memcpy(&f,&bits,4);return f;}
@@ -72,6 +73,7 @@ namespace {
 }
 bool game(){return settings.content.gameId==" BIOHAZARD  GUN SURVIVOR2";}
 bool ready(){return available.load();}
+bool inRound(){return ready() && activePhase.load();}
 unsigned generation(){return serial.load();}
 void neutral(){if(game())cabinet.release(nowMs());else cabinet.reset();++serial;turn=0;std::lock_guard<std::mutex> lock(aimMutex);aim={};}
 void publishAim(Vec origin,Vec forward){std::lock_guard<std::mutex> lock(aimMutex);aim={origin,forward,nowMs(),finite(origin)&&finite(forward)};}
